@@ -43,6 +43,14 @@ public class Master : MonoBehaviour {
         }
     }
 
+    private void Update() {
+        if(Input.touchCount>0){
+        Vector2 movement = Input.touches[0].deltaPosition/50;
+        transform.position += new Vector3(movement.x,movement.y,0);
+
+        }
+    }
+
     void CreateScene () {
         List<Shape> allShapes = new List<Shape> (FindObjectsOfType<Shape> ());
         allShapes.Sort ((a, b) => a.operation.CompareTo (b.operation));
