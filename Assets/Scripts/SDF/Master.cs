@@ -69,7 +69,6 @@ public class Master : MonoBehaviour {
             shapeData[i] = new ShapeData () {
                 position = s.Position,
                 scale = s.Scale, colour = col,
-                surfaceLightness = s.surfaceLightness,
                 shapeType = (int) s.shapeType,
                 operation = (int) s.operation,
                 blendStrength = s.blendStrength*3,
@@ -107,7 +106,6 @@ public class Master : MonoBehaviour {
     struct ShapeData {
         public Vector3 position;
         public Vector3 scale;
-        public float surfaceLightness;
         public Vector3 colour;
         public int shapeType;
         public int operation;
@@ -115,7 +113,7 @@ public class Master : MonoBehaviour {
         public int numChildren;
 
         public static int GetSize () {
-            return sizeof (float) * 11 + sizeof (int) * 3;
+            return sizeof (float) * 10 + sizeof (int) * 3;
         }
     }
 }

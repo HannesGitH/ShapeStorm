@@ -22,7 +22,6 @@ struct Shape {
     int operation;
     float blendStrength;
     int numChildren;
-    float surfaceGlow;
 };
 
 StructuredBuffer<Shape> shapes;
