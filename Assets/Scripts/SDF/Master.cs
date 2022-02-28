@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
 public class Master : MonoBehaviour {
     public ComputeShader raymarching;
@@ -92,7 +93,7 @@ public class Master : MonoBehaviour {
         raymarching.SetMatrix ("_CameraInverseProjection", cam.projectionMatrix.inverse);
         raymarching.SetVector ("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         raymarching.SetBool ("positionLight", !lightIsDirectional);
-        raymarching.SetFloat("crazyEffectStrength", 1f);
+        raymarching.SetFloat("crazyEffectStrength", 0f);
     }
 
     void InitRenderTexture () {
@@ -105,6 +106,8 @@ public class Master : MonoBehaviour {
             target.Create ();
         }
     }
+
+
 
     struct ShapeData {
         public Vector3 position;
