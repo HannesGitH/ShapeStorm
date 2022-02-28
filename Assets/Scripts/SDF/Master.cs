@@ -68,7 +68,9 @@ public class Master : MonoBehaviour {
             Vector3 col = new Vector3 (s.colour.r, s.colour.g, s.colour.b);
             shapeData[i] = new ShapeData () {
                 position = s.Position,
-                scale = s.Scale, colour = col,
+                scale = s.Scale, 
+                lightness = s.lightness,
+                colour = col,
                 shapeType = (int) s.shapeType,
                 operation = (int) s.operation,
                 blendStrength = s.blendStrength*3,
@@ -107,13 +109,14 @@ public class Master : MonoBehaviour {
         public Vector3 position;
         public Vector3 scale;
         public Vector3 colour;
+        public float lightness;
         public int shapeType;
         public int operation;
         public float blendStrength;
         public int numChildren;
 
         public static int GetSize () {
-            return sizeof (float) * 10 + sizeof (int) * 3;
+            return sizeof (float) * 11 + sizeof (int) * 3;
         }
     }
 }

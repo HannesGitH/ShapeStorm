@@ -10,7 +10,7 @@ float3 _Light;
 bool positionLight;
 
 static const float maxDst = 80;
-static const float epsilon = 0.001f;
+static const float epsilon = 0.0001f;
 static const float shadowBias = epsilon * 50;
 
 struct Shape {
@@ -18,6 +18,7 @@ struct Shape {
     float3 position;
     float3 size;
     float3 colour;
+    float lightness;
     int shapeType;
     int operation;
     float blendStrength;
@@ -235,7 +236,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
             float shadow = CalculateShadow(ray, dstToLight);
 
-            Destination[id.xy] = float4(col * lighting * shadow ,1);
+            // Destination[id.xy] = float4((col * lighting * shadow + 0.1)* (0.5 + marchSteps/50),1);
+            Destination[id.xy] = float4(col*sqrt(sqrt(max(marchSteps-15,0)*0.5f)-0.001f)+(sqrt(max(marchSteps-35,0)*0.008f)-0.5f),1);
 
             break;
         }
@@ -243,4 +245,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         ray.origin += ray.direction * dst;
         rayDst += dst;
     }
+
+    
+
 }
