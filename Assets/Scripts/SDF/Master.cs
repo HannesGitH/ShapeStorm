@@ -6,6 +6,8 @@ using UnityEngine;
 public class Master : MonoBehaviour {
     public ComputeShader raymarching;
 
+    public bool usesLiteMode = true; //might want to make 2 shaders and use the faster one then
+
     RenderTexture target;
     Camera cam;
     Light lightSource;
@@ -28,8 +30,10 @@ public class Master : MonoBehaviour {
         raymarching.SetTexture (0, "Source", source);
         raymarching.SetTexture (0, "Destination", target);
 
-        int threadGroupsX = Mathf.CeilToInt (cam.pixelWidth / 16.0f);
-        int threadGroupsY = Mathf.CeilToInt (cam.pixelHeight / 16.0f);
+        int liteModeDivider = usesLiteMode ? 16 : 1;
+
+        int threadGroupsX = Mathf.CeilToInt (cam.pixelWidth / 16.0f / liteModeDivider);
+        int threadGroupsY = Mathf.CeilToInt (cam.pixelHeight / 16.0f / liteModeDivider);
         raymarching.Dispatch (0, threadGroupsX, threadGroupsY, 1);
 
         Graphics.Blit (target, destination);
