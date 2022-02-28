@@ -8,6 +8,7 @@ public class PlayerMaybe : MonoBehaviour
 {
 
     [Range(1,50)] public float speed = 20f; 
+    [Range(1,50)] public float turnSpeed = 20f; 
 
     // public Vector3 pos;
 
@@ -16,14 +17,13 @@ public class PlayerMaybe : MonoBehaviour
         // ahead = new GameObject("ahead");
     }
 
+    float smoothV;
     void Update() 
     { 
-        transform.RotateAround(Vector3.zero, transform.right, speed * Time.deltaTime * Input.GetAxis("Vertical"));
-        transform.RotateAround(transform.position, transform.forward, -speed * Time.deltaTime * Input.GetAxis("Horizontal"));
-        //pos += speed*new Vector3(Input.GetAxis("Horizontal"),0,Input.GetAxis("Vertical"));
-        //transform.position = pos;
-        // transform.LookAt(new Vector3(0,0,0)); 
-        transform.position += transform.forward * -speed * Input.GetAxis("Mouse ScrollWheel");
+        //speed = Mathf.SmoothDamp(speed,speed+35*Input.GetAxis("Vertical"),ref smoothV,0.80f);
+        transform.RotateAround(Vector3.zero, transform.right, speed  * Input.GetAxis("Vertical")* Time.deltaTime);
+        transform.RotateAround(transform.position, transform.forward, -turnSpeed * Time.deltaTime * Input.GetAxis("Horizontal"));
+        transform.position += transform.forward * -speed * 0.005f * Input.GetAxis("Zoom");
         //// _renderer.enabled = (currentDistance > hideDistance); w
     }
 

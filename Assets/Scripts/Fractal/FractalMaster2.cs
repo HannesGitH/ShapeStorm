@@ -6,7 +6,7 @@ public class FractalMaster2 : MonoBehaviour {
     public ComputeShader fractalShader;
 
     [Range (0, 20)]
-    public float fractalPower = 0;
+    public float fractalPower = 1;
     public float darkness = 70;
 
     [Header ("Colour mixing")]
@@ -34,8 +34,12 @@ public class FractalMaster2 : MonoBehaviour {
     // Animate properties
     void Update () {
         if (Application.isPlaying) {
-            fractalPower += powerIncreaseSpeed * Time.deltaTime;
+            // fractalPower += powerIncreaseSpeed * Time.deltaTime;
+            
         }
+        // if(Input.GetKeyDown(KeyCode.Q))fractalPower+=powerIncreaseSpeed * Time.deltaTime;
+        // if(Input.GetKeyDown(KeyCode.E))fractalPower-=powerIncreaseSpeed * Time.deltaTime;
+        fractalPower += Input.GetAxis("Horizontal2") * powerIncreaseSpeed * Time.deltaTime;
     }
 
     void OnRenderImage (RenderTexture source, RenderTexture destination) {
