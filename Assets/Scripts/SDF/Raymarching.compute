@@ -13,7 +13,7 @@ bool positionLight;
 static const bool liteMode = true;
 
 static const float maxDst = liteMode ? 40 : 80;
-static const float epsilon = liteMode ? 0.05f : 0.0001f ;
+static const float epsilon = liteMode ? 0.3f : 0.0001f ;
 static const float shadowBias = epsilon * 50;
 static const float3 globalGlowCol = float3(0.4,0,1);
 
@@ -88,7 +88,7 @@ float4 Blend( float a, float b, float3 colA, float3 colB, float k )
 {
     float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
     float blendDst = lerp( b, a, h ) - k*h*(1.0-h);
-    float3 blendCol = lerp(colB,colA,h);
+    float3 blendCol = (!liteMode) ? lerp(colB,colA,h): float3(0,0,0);
     return float4(blendCol, blendDst);
 }
 
@@ -99,21 +99,21 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
     if (operation == 0) {
         if (dstB < dstA) {
             dst = dstB;
-            colour = colourB;
+            if(!liteMode)colour = colourB;
         }
     } 
     // Blend
     else if (operation == 1) {
         float4 blend = Blend(dstA,dstB,colourA,colourB, blendStrength);
         dst = blend.w;
-        colour = blend.xyz;
+        if(!liteMode)colour = blend.xyz;
     }
     // Cut
     else if (operation == 2) {
         // max(a,-b)
         if (-dstB > dst) {
             dst = -dstB;
-            colour = colourB;
+            if(!liteMode)colour = colourB;
         }
     }
     // Mask
@@ -121,15 +121,17 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
         // max(a,b)
         if (dstB > dst) {
             dst = dstB;
-            colour = colourB;
+            if(!liteMode)colour = colourB;
         }
     }
+    if(!liteMode){
+        float h = clamp( 0.5+0.5*(dstB-dstA), 0.0, 1.0 );
+        float blendDst = lerp( dstB, dstA, h ) - h*(1.0-h);
+        float3 blendCol = lerp(colourB,colourA,h);
 
-    float h = clamp( 0.5+0.5*(dstB-dstA), 0.0, 1.0 );
-    float blendDst = lerp( dstB, dstA, h ) - h*(1.0-h);
-    float3 blendCol = lerp(colourB,colourA,h);
-
-    return float4(blendCol*0.5+colour*0.5,dst);
+        return float4(blendCol*0.5+colour*0.5,dst);
+    }
+    return float4(0,0,0,dst);
 }
 
 float GetShapeDistance(Shape shape, float3 eye) {
@@ -207,7 +209,7 @@ float CalculateShadow(Ray ray, float dstToShadePoint) {
     return shadowIntensity + (1-shadowIntensity) * brightness;
 }
 
-[numthreads(8,8,1)]
+[numthreads(16,16,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint width,height;
@@ -228,6 +230,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         marchSteps ++;
         sceneInfo = SceneInfo(ray.origin);
         dst = sceneInfo.w;
+        if(!liteMode)
         stackedCol += sceneInfo.xyz  * 0.015f ;/// sqrt(sqrt(abs(dst-0.0001)))
         
         if (dst <= epsilon) {
@@ -239,22 +242,20 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         rayDst += dst;
     }
 
-
-    float3 pointOnSurface = float3(0,0,0);
-    float3 normal = float3(0,0,0);
-    float3 col = stackedCol;
-    float3 objCol = float3(0,0,0);
+    if(!liteMode){
+        float3 pointOnSurface = float3(0,0,0);
+        float3 normal = float3(0,0,0);
+        float3 col = stackedCol;
+        float3 objCol = float3(0,0,0);
     
 
-    if(success){
-        pointOnSurface = ray.origin + ray.direction * dst;
-        if(!liteMode)
-        normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
-        col = (sceneInfo.xyz*0.2f)+(stackedCol*0.8f);
-        objCol = sceneInfo.xyz;
-    }
+        if(success){
+            pointOnSurface = ray.origin + ray.direction * dst;
+            normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
+            col = (sceneInfo.xyz*0.2f)+(stackedCol*0.8f);
+            objCol = sceneInfo.xyz;
+        }
 
-    if(!liteMode){
 
     
         float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
@@ -305,7 +306,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }else{
         Destination[id.xy] = 
         float4(
-            float3(marchSteps*0.05f,marchSteps*0.0125f,marchSteps*0.1f)
+            marchSteps*float3(0.05f,0.0125f,0.1f)
             // (col*max(
             //     sqrt(sqrt(max(marchSteps-15,0.1)*0.1f)-0.0001f),
             //     0

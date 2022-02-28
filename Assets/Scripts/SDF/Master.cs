@@ -28,8 +28,8 @@ public class Master : MonoBehaviour {
         raymarching.SetTexture (0, "Source", source);
         raymarching.SetTexture (0, "Destination", target);
 
-        int threadGroupsX = Mathf.CeilToInt (cam.pixelWidth / 8.0f);
-        int threadGroupsY = Mathf.CeilToInt (cam.pixelHeight / 8.0f);
+        int threadGroupsX = Mathf.CeilToInt (cam.pixelWidth / 16.0f);
+        int threadGroupsY = Mathf.CeilToInt (cam.pixelHeight / 16.0f);
         raymarching.Dispatch (0, threadGroupsX, threadGroupsY, 1);
 
         Graphics.Blit (target, destination);
