@@ -6,6 +6,7 @@ RWTexture2D<float4> Destination;
 float4x4 _CameraToWorld;
 float4x4 _CameraInverseProjection;
 
+float crazyEffectStrength;
 float3 _Light;
 bool positionLight;
 
@@ -122,7 +123,11 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
         }
     }
 
-    return float4(colour,dst);
+    float h = clamp( 0.5+0.5*(dstB-dstA), 0.0, 1.0 );
+    float blendDst = lerp( dstB, dstA, h ) - h*(1.0-h);
+    float3 blendCol = lerp(colourB,colourA,h);
+
+    return float4(blendCol*0.5+colour*0.5,dst);
 }
 
 float GetShapeDistance(Shape shape, float3 eye) {
@@ -242,38 +247,56 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     if(success){
         pointOnSurface = ray.origin + ray.direction * dst;
         normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
-        col = (sceneInfo.xyz*0.5)+(stackedCol*0.5);
+        col = (sceneInfo.xyz*0.2)+(stackedCol*0.8);
         objCol = sceneInfo.xyz;
     }
     float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
-    float lighting = saturate(saturate(dot(normal,lightDir)));
+    float lighting = success ? saturate(saturate(dot(normal,lightDir))): 1;
     
     
     // // Shadow
     float3 offsetPos = pointOnSurface + normal * shadowBias;
     float3 dirToLight = (positionLight)?normalize(_Light- offsetPos):-_Light;
 
+
+    float3 reflectDir = 2*(dot(lightDir,normal)*normal)-lightDir;
+    float cosphi = -min(dot(ray.direction,reflectDir),0);
+    float spec = pow(cosphi,40)/2;
+    float spec2 = pow(cosphi,90);
+    float crazyEffectVal = pow(max(dot(ray.direction,reflectDir),0),50)/2;
+
     ray.origin = offsetPos;
     ray.direction = dirToLight;
 
     float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
-    float shadow = CalculateShadow(ray, dstToLight);
+    float shadow = success ? CalculateShadow(ray, dstToLight) : 1;
+
+    spec *=shadow;
+    spec2 *=shadow;
+
+    float3 crazyColor = (crazyEffectVal+0.3)*stackedCol*5*crazyEffectStrength;
 
     // Destination[id.xy] = float4((col * lighting * shadow + 0.1)* (0.5 + marchSteps/50),1);
     Destination[id.xy] = 
-    float4(
-        (col*max(
-            sqrt(sqrt(max(marchSteps-15,0)*1.1f)-0.0001f),
+    // float4(1,1,1,1)
+    // ;
+    // +
+    float4(max(shadow,0.2)*max(lighting,0.5)*
+        ((col*max(
+            sqrt(sqrt(max(marchSteps-15,0.1)*0.1f)-0.0001f),
             0
-        ))+
-        float3(1,1,1)*max(
+        ))
+        +float3(1,1,1)*max(
             sqrt(max(marchSteps-35,0)*0.08f)-0.5f,
             0
-        )+
-        (objCol*lighting*shadow),
+        )
+        +(objCol*lighting*shadow*(.2+spec)))+spec2
+        +crazyColor
 
-        1
+        ,1
     );
+
+    success=false;
 
 
 }

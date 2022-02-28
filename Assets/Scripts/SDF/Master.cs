@@ -92,6 +92,7 @@ public class Master : MonoBehaviour {
         raymarching.SetMatrix ("_CameraInverseProjection", cam.projectionMatrix.inverse);
         raymarching.SetVector ("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         raymarching.SetBool ("positionLight", !lightIsDirectional);
+        raymarching.SetFloat("crazyEffectStrength", 1f);
     }
 
     void InitRenderTexture () {
