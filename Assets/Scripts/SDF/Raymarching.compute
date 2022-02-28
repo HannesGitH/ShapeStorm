@@ -213,32 +213,16 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     Ray ray = CreateCameraRay(uv);
     int marchSteps = 0;
-
+    float4 sceneInfo;
+    float dst;
+    bool success = false;
     while (rayDst < maxDst) {
         marchSteps ++;
-        float4 sceneInfo = SceneInfo(ray.origin);
-        float dst = sceneInfo.w;
+        sceneInfo = SceneInfo(ray.origin);
+        dst = sceneInfo.w;
         
         if (dst <= epsilon) {
-            float3 pointOnSurface = ray.origin + ray.direction * dst;
-            float3 normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
-            float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
-            float lighting = saturate(saturate(dot(normal,lightDir)));
-            float3 col = sceneInfo.xyz;
-            
-            // Shadow
-            float3 offsetPos = pointOnSurface + normal * shadowBias;
-            float3 dirToLight = (positionLight)?normalize(_Light- offsetPos):-_Light;
-
-            ray.origin = offsetPos;
-            ray.direction = dirToLight;
-
-            float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
-            float shadow = CalculateShadow(ray, dstToLight);
-
-            // Destination[id.xy] = float4((col * lighting * shadow + 0.1)* (0.5 + marchSteps/50),1);
-            Destination[id.xy] = float4(col*sqrt(sqrt(max(marchSteps-15,0)*0.5f)-0.001f)+(sqrt(max(marchSteps-35,0)*0.008f)-0.5f),1);
-
+            success = true;
             break;
         }
 
@@ -246,6 +230,33 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         rayDst += dst;
     }
 
+
+    float3 pointOnSurface = float3(0,0,0);
+    float3 normal = float3(0,0,0);
+    float3 col = float3(1,1,1) * 0.7;
     
+
+    if(success){
+        pointOnSurface = ray.origin + ray.direction * dst;
+        normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
+        col = sceneInfo.xyz;
+    }
+    // float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
+    // float lighting = saturate(saturate(dot(normal,lightDir)));
+    
+    
+    // // Shadow
+    float3 offsetPos = pointOnSurface + normal * shadowBias;
+    float3 dirToLight = (positionLight)?normalize(_Light- offsetPos):-_Light;
+
+    ray.origin = offsetPos;
+    ray.direction = dirToLight;
+
+    // float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
+    // float shadow = CalculateShadow(ray, dstToLight);
+
+    // Destination[id.xy] = float4((col * lighting * shadow + 0.1)* (0.5 + marchSteps/50),1);
+    Destination[id.xy] = float4(col*sqrt(sqrt(max(marchSteps-15,0)*0.5f)-0.001f)+(sqrt(max(marchSteps-35,0)*0.008f)-0.5f),1);
+
 
 }
