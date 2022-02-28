@@ -135,6 +135,7 @@ GameObject:
   - component: {fileID: 769149574}
   - component: {fileID: 769149573}
   - component: {fileID: 769149576}
+  - component: {fileID: 769149577}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -221,12 +222,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fractalShader: {fileID: 7200000, guid: 6ee92cb3b72454e60b7e0165333bbce5, type: 3}
-  fractalPower: 5.2
+  fractalPower: 0
   darkness: 70
   blackAndWhite: 0.132
   colorA: {r: 0, g: 1, b: 0.99295163, a: 0.42745098}
   colorB: {r: 1, g: 0.05098039, b: 0.9867989, a: 0.29803923}
   powerIncreaseSpeed: 0.2
+--- !u!114 &769149577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769149572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72e753b4eafce4d8f8d7fb0e28a4e7c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 0.2
+  pos: {x: 0, y: 0, z: 0}
 --- !u!1 &1511232659
 GameObject:
   m_ObjectHideFlags: 0

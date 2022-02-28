@@ -5,8 +5,8 @@ public class FractalMaster2 : MonoBehaviour {
 
     public ComputeShader fractalShader;
 
-    [Range (1, 20)]
-    public float fractalPower = 10;
+    [Range (0, 20)]
+    public float fractalPower = 0;
     public float darkness = 70;
 
     [Header ("Colour mixing")]
