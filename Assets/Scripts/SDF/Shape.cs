@@ -11,6 +11,8 @@ public class Shape : MonoBehaviour
     public ShapeType shapeType;
     public Operation operation;
     public Color colour = Color.white;
+    public float surfaceLightness = 0.3f;
+    
     [Range(0,1)]
     public float blendStrength;
     [HideInInspector]
