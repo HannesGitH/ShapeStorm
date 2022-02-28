@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/mandelbulb2.unity
+    guid: 1fbf68cbd0d34496d8003c8e95990975
   m_configObjects: {}
