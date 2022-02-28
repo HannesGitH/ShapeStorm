@@ -12,6 +12,7 @@ bool positionLight;
 static const float maxDst = 80;
 static const float epsilon = 0.0001f;
 static const float shadowBias = epsilon * 50;
+static const float3 globalGlowCol = float3(0.4,0,1);
 
 struct Shape {
     
@@ -139,7 +140,6 @@ float GetShapeDistance(Shape shape, float3 eye) {
     return maxDst;
 }
 
-
 float4 SceneInfo(float3 eye) {
     float globalDst = maxDst;
     float3 globalColour = 1;
@@ -214,12 +214,14 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     Ray ray = CreateCameraRay(uv);
     int marchSteps = 0;
     float4 sceneInfo;
+    float3 stackedCol = float3(0,0,0);
     float dst;
     bool success = false;
     while (rayDst < maxDst) {
         marchSteps ++;
         sceneInfo = SceneInfo(ray.origin);
         dst = sceneInfo.w;
+        stackedCol += sceneInfo.xyz  * 0.015 ;/// sqrt(sqrt(abs(dst-0.0001)))
         
         if (dst <= epsilon) {
             success = true;
@@ -233,16 +235,18 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float3 pointOnSurface = float3(0,0,0);
     float3 normal = float3(0,0,0);
-    float3 col = float3(1,1,1) * 0.7;
+    float3 col = stackedCol;
+    float3 objCol = float3(0,0,0);
     
 
     if(success){
         pointOnSurface = ray.origin + ray.direction * dst;
         normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
-        col = sceneInfo.xyz;
+        col = (sceneInfo.xyz*0.5)+(stackedCol*0.5);
+        objCol = sceneInfo.xyz;
     }
-    // float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
-    // float lighting = saturate(saturate(dot(normal,lightDir)));
+    float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
+    float lighting = saturate(saturate(dot(normal,lightDir)));
     
     
     // // Shadow
@@ -252,11 +256,24 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     ray.origin = offsetPos;
     ray.direction = dirToLight;
 
-    // float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
-    // float shadow = CalculateShadow(ray, dstToLight);
+    float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
+    float shadow = CalculateShadow(ray, dstToLight);
 
     // Destination[id.xy] = float4((col * lighting * shadow + 0.1)* (0.5 + marchSteps/50),1);
-    Destination[id.xy] = float4(col*sqrt(sqrt(max(marchSteps-15,0)*0.5f)-0.001f)+(sqrt(max(marchSteps-35,0)*0.008f)-0.5f),1);
+    Destination[id.xy] = 
+    float4(
+        (col*max(
+            sqrt(sqrt(max(marchSteps-15,0)*1.1f)-0.0001f),
+            0
+        ))+
+        float3(1,1,1)*max(
+            sqrt(max(marchSteps-35,0)*0.08f)-0.5f,
+            0
+        )+
+        (objCol*lighting*shadow),
+
+        1
+    );
 
 
 }
