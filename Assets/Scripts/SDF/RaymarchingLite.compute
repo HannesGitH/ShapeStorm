@@ -10,10 +10,11 @@ float crazyEffectStrength;
 float3 _Light;
 bool positionLight;
 
+int liteModeAggressor = 16;
+
 static const float maxDst = 40;
 static const float epsilon = 0.3f ;
 static const float shadowBias = epsilon * 50;
-static const int liteModeAggressor = 16;
 
 
 struct Shape {
@@ -99,7 +100,7 @@ float Combine(float dstA, float dstB, int operation, float blendStrength) {
     } 
     // Blend
     else if (operation == 1) {
-        float4 blend = Blend(dstA,dstB,colourA,colourB, blendStrength);
+        float blend = Blend(dstA,dstB,blendStrength);
         dst = blend.w;
     }
     // Cut
@@ -161,9 +162,9 @@ float SceneInfo(float3 eye) {
 }
 
 float3 EstimateNormal(float3 p) {
-    float x = SceneInfo(float3(p.x+epsilon,p.y,p.z)).w - SceneInfo(float3(p.x-epsilon,p.y,p.z));
-    float y = SceneInfo(float3(p.x,p.y+epsilon,p.z)).w - SceneInfo(float3(p.x,p.y-epsilon,p.z));
-    float z = SceneInfo(float3(p.x,p.y,p.z+epsilon)).w - SceneInfo(float3(p.x,p.y,p.z-epsilon));
+    float x = SceneInfo(float3(p.x+epsilon,p.y,p.z)) - SceneInfo(float3(p.x-epsilon,p.y,p.z));
+    float y = SceneInfo(float3(p.x,p.y+epsilon,p.z)) - SceneInfo(float3(p.x,p.y-epsilon,p.z));
+    float z = SceneInfo(float3(p.x,p.y,p.z+epsilon)) - SceneInfo(float3(p.x,p.y,p.z-epsilon));
     return normalize(float3(x,y,z));
 }
 

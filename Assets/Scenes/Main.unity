@@ -511,6 +511,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   raymarching: {fileID: 7200000, guid: 07335a552fc334acd81fb9585f26ff7e, type: 3}
+  liteMarcher: {fileID: 7200000, guid: 2a318e061233649b3acca4f37c8014ca, type: 3}
+  liteModeAggressor: 16
   player: {fileID: 474434861}
   usesLiteMode: 1
 --- !u!1 &1249788672
