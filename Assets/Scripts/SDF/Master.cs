@@ -6,6 +6,8 @@ using UnityEngine;
 public class Master : MonoBehaviour {
     public ComputeShader raymarching;
 
+    public GameObject player;
+
     public bool usesLiteMode = true; //might want to make 2 shaders and use the faster one then
 
     RenderTexture target;
@@ -44,11 +46,9 @@ public class Master : MonoBehaviour {
     }
 
     private void Update() {
-        if(Input.touchCount>0){
-        Vector2 movement = Input.touches[0].deltaPosition/50;
-        transform.position += new Vector3(movement.x,movement.y,0);
-
-        }
+        // first person kinda
+        transform.position = player.transform.position;
+        transform.forward = player.transform.forward;
     }
 
     void CreateScene () {
