@@ -11,7 +11,7 @@ public class InputMan : InputManI {
             return new Vector3(movement.x,movement.y,0);
         }else
         {
-            return new Vector3();
+            return new Vector3(Input.GetAxis("Horizontal"),Input.GetAxis("Vertical"),0);
         }
     }
 }

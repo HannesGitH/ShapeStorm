@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+
+    public InputManI inputMan = InputMan(); //TODO: wanna drag n drop
+
     // Start is called before the first frame update
     void Start()
     {
@@ -13,9 +16,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.touchCount>0){
-            Vector2 movement = -Input.touches[0].deltaPosition/50;
-            transform.position += new Vector3(movement.x,movement.y,0);
-        }
+        Vector3 delta = inputMan.getDelta();
+        transform.position += delta;
     }
 }
