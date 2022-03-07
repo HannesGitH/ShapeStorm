@@ -14,9 +14,8 @@ public class Player : MonoBehaviour
     void Update()
     {
         if(Input.touchCount>0){
-            Vector2 movement = Input.touches[0].deltaPosition/50;
-            transform.position += new Vector3(movement.x,-movement.y,0);
-
+            Vector2 movement = -Input.touches[0].deltaPosition/50;
+            transform.position += new Vector3(movement.x,movement.y,0);
         }
     }
 }
