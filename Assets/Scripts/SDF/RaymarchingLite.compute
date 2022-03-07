@@ -10,13 +10,10 @@ float crazyEffectStrength;
 float3 _Light;
 bool positionLight;
 
-static const bool liteMode = true;
-
-static const float maxDst = liteMode ? 40 : 80;
-static const float epsilon = liteMode ? 0.3f : 0.0001f ;
+static const float maxDst = 40;
+static const float epsilon = 0.3f ;
 static const float shadowBias = epsilon * 50;
-static const float3 globalGlowCol = float3(0.4,0,1);
-static const int liteModeAggressor = liteMode ? 16 : 1; //should be similar to Master.cs's LiteModeDivider
+static const int liteModeAggressor = 16;
 
 
 struct Shape {
@@ -86,36 +83,30 @@ Ray CreateCameraRay(float2 uv) {
 
 // polynomial smooth min (k = 0.1);
 // from https://www.iquilezles.org/www/articles/smin/smin.htm
-float4 Blend( float a, float b, float3 colA, float3 colB, float k )
+float Blend( float a, float b, float k )
 {
     float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
-    float blendDst = lerp( b, a, h ) - k*h*(1.0-h);
-    float3 blendCol = (!liteMode) ? lerp(colB,colA,h): float3(0,0,0);
-    return float4(blendCol, blendDst);
+    return lerp( b, a, h ) - k*h*(1.0-h);
 }
 
-float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int operation, float blendStrength) {
+float Combine(float dstA, float dstB, int operation, float blendStrength) {
     float dst = dstA;
-    float3 colour = colourA;
 
     if (operation == 0) {
         if (dstB < dstA) {
             dst = dstB;
-            if(!liteMode)colour = colourB;
         }
     } 
     // Blend
     else if (operation == 1) {
         float4 blend = Blend(dstA,dstB,colourA,colourB, blendStrength);
         dst = blend.w;
-        if(!liteMode)colour = blend.xyz;
     }
     // Cut
     else if (operation == 2) {
         // max(a,-b)
         if (-dstB > dst) {
             dst = -dstB;
-            if(!liteMode)colour = colourB;
         }
     }
     // Mask
@@ -123,17 +114,9 @@ float4 Combine(float dstA, float dstB, float3 colourA, float3 colourB, int opera
         // max(a,b)
         if (dstB > dst) {
             dst = dstB;
-            if(!liteMode)colour = colourB;
         }
     }
-    if(!liteMode){
-        float h = clamp( 0.5+0.5*(dstB-dstA), 0.0, 1.0 );
-        float blendDst = lerp( dstB, dstA, h ) - h*(1.0-h);
-        float3 blendCol = lerp(colourB,colourA,h);
-
-        return float4(blendCol*0.5+colour*0.5,dst);
-    }
-    return float4(0,0,0,dst);
+    return dst;
 }
 
 float GetShapeDistance(Shape shape, float3 eye) {
@@ -151,65 +134,61 @@ float GetShapeDistance(Shape shape, float3 eye) {
     return maxDst;
 }
 
-float4 SceneInfo(float3 eye) {
+float SceneInfo(float3 eye) {
     float globalDst = maxDst;
-    float3 globalColour = 1;
     
     for (int i = 0; i < numShapes; i ++) {
         Shape shape = shapes[i];
         int numChildren = shape.numChildren;
 
         float localDst = GetShapeDistance(shape,eye);
-        float3 localColour = shape.colour;
 
 
         for (int j = 0; j < numChildren; j ++) {
             Shape childShape = shapes[i+j+1];
             float childDst = GetShapeDistance(childShape,eye);
 
-            float4 combined = Combine(localDst, childDst, localColour, childShape.colour, childShape.operation, childShape.blendStrength);
-            localColour = combined.xyz;
-            localDst = combined.w;
+            float combined = Combine(localDst, childDst, childShape.operation, childShape.blendStrength);
+            localDst = combined;
         }
         i+=numChildren; // skip over children in outer loop
         
-        float4 globalCombined = Combine(globalDst, localDst, globalColour, localColour, shape.operation, shape.blendStrength);
-        globalColour = globalCombined.xyz;
-        globalDst = globalCombined.w;        
+        float globalCombined = Combine(globalDst, localDst, shape.operation, shape.blendStrength);
+        globalDst = globalCombined;        
     }
 
-    return float4(globalColour, globalDst);
+    return globalDst;
 }
 
 float3 EstimateNormal(float3 p) {
-    float x = SceneInfo(float3(p.x+epsilon,p.y,p.z)).w - SceneInfo(float3(p.x-epsilon,p.y,p.z)).w;
-    float y = SceneInfo(float3(p.x,p.y+epsilon,p.z)).w - SceneInfo(float3(p.x,p.y-epsilon,p.z)).w;
-    float z = SceneInfo(float3(p.x,p.y,p.z+epsilon)).w - SceneInfo(float3(p.x,p.y,p.z-epsilon)).w;
+    float x = SceneInfo(float3(p.x+epsilon,p.y,p.z)).w - SceneInfo(float3(p.x-epsilon,p.y,p.z));
+    float y = SceneInfo(float3(p.x,p.y+epsilon,p.z)).w - SceneInfo(float3(p.x,p.y-epsilon,p.z));
+    float z = SceneInfo(float3(p.x,p.y,p.z+epsilon)).w - SceneInfo(float3(p.x,p.y,p.z-epsilon));
     return normalize(float3(x,y,z));
 }
 
-float CalculateShadow(Ray ray, float dstToShadePoint) {
-    float rayDst = 0;
-    int marchSteps = 0;
-    float shadowIntensity = .2;
-    float brightness = 1;
+// float CalculateShadow(Ray ray, float dstToShadePoint) {
+//     float rayDst = 0;
+//     int marchSteps = 0;
+//     float shadowIntensity = .2;
+//     float brightness = 1;
 
-    while (rayDst < dstToShadePoint) {
-        marchSteps ++;
-        float4 sceneInfo = SceneInfo(ray.origin);
-        float dst = sceneInfo.w;
+//     while (rayDst < dstToShadePoint) {
+//         marchSteps ++;
+//         float4 sceneInfo = SceneInfo(ray.origin);
+//         float dst = sceneInfo.w;
         
-        if (dst <= epsilon) {
-            return shadowIntensity;
-        }
+//         if (dst <= epsilon) {
+//             return shadowIntensity;
+//         }
 
-        brightness = min(brightness,dst*200);
+//         brightness = min(brightness,dst*200);
 
-        ray.origin += ray.direction * dst;
-        rayDst += dst;
-    }
-    return shadowIntensity + (1-shadowIntensity) * brightness;
-}
+//         ray.origin += ray.direction * dst;
+//         rayDst += dst;
+//     }
+//     return shadowIntensity + (1-shadowIntensity) * brightness;
+// }
 
 [numthreads(16,16,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -226,8 +205,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     Ray ray = CreateCameraRay(uv);
     int marchSteps = 0;
-    float4 sceneInfo;
-    float3 stackedCol = float3(0,0,0);
+    float sceneInfo;
     float dst;
     bool success = false;
     while (rayDst < maxDst) {
@@ -246,86 +224,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         rayDst += dst;
     }
 
-    if(!liteMode){
-        float3 pointOnSurface = float3(0,0,0);
-        float3 normal = float3(0,0,0);
-        float3 col = stackedCol;
-        float3 objCol = float3(0,0,0);
-    
 
-        if(success){
-            pointOnSurface = ray.origin + ray.direction * dst;
-            normal = EstimateNormal(pointOnSurface - ray.direction * epsilon);
-            col = (sceneInfo.xyz*0.2f)+(stackedCol*0.8f);
-            objCol = sceneInfo.xyz;
-        }
-
-
-    
-        float3 lightDir = (positionLight)?normalize(_Light-ray.origin):-_Light;
-        float lighting = success ? saturate(saturate(dot(normal,lightDir))): 1;
-        
-        
-        // // Shadow
-        float3 offsetPos = pointOnSurface + normal * shadowBias;
-        float3 dirToLight = (positionLight)?normalize(_Light- offsetPos):-_Light;
-
-
-        float3 reflectDir = 2*(dot(lightDir,normal)*normal)-lightDir;
-        float cosphi = -min(dot(ray.direction,reflectDir),0);
-        float spec = pow(cosphi,40)*0.5f;
-        float spec2 = pow(cosphi,90);
-        float crazyEffectVal = pow(max(dot(ray.direction,reflectDir),0),50)*0.5f;
-
-        ray.origin = offsetPos;
-        ray.direction = dirToLight;
-
-        float dstToLight = (positionLight)?distance(offsetPos,_Light):maxDst;
-        float shadow = success ? CalculateShadow(ray, dstToLight) : 1;
-
-        spec *=shadow;
-        spec2 *=shadow;
-
-        float3 crazyColor = (crazyEffectVal+0.3f)*stackedCol*5*crazyEffectStrength;
-
-        // Destination[id.xy] = float4((col * lighting * shadow + 0.1)* (0.5 + marchSteps/50),1);
-        Destination[id.xy] = 
-        // float4(1,1,1,1)
-        // ;
-        // +
-        float4(max(shadow,0.2f)*max(lighting,0.5f)*
-            ((col*max(
-                sqrt(sqrt(max(marchSteps-15,0.1f)*0.1f)-0.0001f),
-                0
-            ))
-            +float3(1,1,1)*max(
-                sqrt(max(marchSteps-35,0)*0.08f)-0.5f,
-                0
-            )
-            +(objCol*lighting*shadow*(.2f+spec)))+spec2
-            +crazyColor
-
-            ,1
-        );
-    }else{
-        for(int x = 0; x<liteModeAggressor ; x++){
-        for(int y = 0; y<liteModeAggressor ; y++){
-        Destination[id.xy*liteModeAggressor-float2(x,y)]=//+(height*y)] = 
-        float4(
-            marchSteps*float3(0.05f,0.0125f,0.1f)
-            // (col*max(
-            //     sqrt(sqrt(max(marchSteps-15,0.1)*0.1f)-0.0001f),
-            //     0
-            // ))
-            // +float3(1,1,1)*max(
-            //     sqrt(max(marchSteps-35,0)*0.08f)-0.5f,
-            //     0
-            // )
-            ,1
-        );
-        }
-        }
+    for(int x = 0; x<liteModeAggressor ; x++){
+    for(int y = 0; y<liteModeAggressor ; y++){
+        Destination[id.xy*liteModeAggressor-float2(x,y)]=float4(marchSteps*float3(0.05f,0.0125f,0.1f),1);
     }
+    }
+    
     success=false;
 
 }
