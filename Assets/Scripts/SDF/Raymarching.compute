@@ -6,7 +6,7 @@ RWTexture2D<float4> Destination;
 float4x4 _CameraToWorld;
 float4x4 _CameraInverseProjection;
 
-float crazyEffectStrength;
+float crazyEffectStrength = 0;
 float3 _Light;
 bool positionLight;
 
@@ -87,7 +87,7 @@ float4 Blend( float a, float b, float3 colA, float3 colB, float k )
 {
     float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
     float blendDst = lerp( b, a, h ) - k*h*(1.0-h);
-    float3 blendCol = lerp(colB,colA,h)
+    float3 blendCol = lerp(colB,colA,h);
     return float4(blendCol, blendDst);
 }
 
@@ -148,6 +148,7 @@ float GetShapeDistance(Shape shape, float3 eye) {
 }
 
 float4 SceneInfo(float3 eye) {
+    // return float4(1,1,1,1);
     float globalDst = maxDst;
     float3 globalColour = 1;
     
@@ -213,7 +214,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     uint width,height;
     Destination.GetDimensions(width, height);
 
-    float2 uv = (id.xy / float2(width,height) * 2 - 1);
+    Destination[id.xy] = Source[id.xy];
+    float2 uv = id.xy / float2(width,height) * 2 - 1;
     float rayDst = 0;
 
     Ray ray = CreateCameraRay(uv);
