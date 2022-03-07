@@ -101,7 +101,7 @@ float Combine(float dstA, float dstB, int operation, float blendStrength) {
     // Blend
     else if (operation == 1) {
         float blend = Blend(dstA,dstB,blendStrength);
-        dst = blend.w;
+        dst = blend;
     }
     // Cut
     else if (operation == 2) {
@@ -136,6 +136,7 @@ float GetShapeDistance(Shape shape, float3 eye) {
 }
 
 float SceneInfo(float3 eye) {
+    // return 1;
     float globalDst = maxDst;
     
     for (int i = 0; i < numShapes; i ++) {
@@ -211,10 +212,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     bool success = false;
     while (rayDst < maxDst) {
         marchSteps ++;
-        sceneInfo = SceneInfo(ray.origin);
-        dst = sceneInfo.w;
-        if(!liteMode)
-        stackedCol += sceneInfo.xyz  * 0.015f ;/// sqrt(sqrt(abs(dst-0.0001)))
+        dst = SceneInfo(ray.origin);
         
         if (dst <= epsilon) {
             success = true;
