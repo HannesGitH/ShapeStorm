@@ -24,7 +24,8 @@ public class Shape : MonoBehaviour
     }
     public Vector4 Rotation {
         get {
-            return transform.rotation;
+            Quaternion q = transform.rotation;
+            return new Vector4(q.x,q.y,q.z,q.w);
         }
     }
 
