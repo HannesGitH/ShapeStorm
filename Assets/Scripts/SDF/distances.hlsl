@@ -1,7 +1,7 @@
 struct Shape {
     
     float3 position;
-    float3 rotation;
+    float4 rotation; //quaternion?
     float3 size;
     float3 colour;
     float lightness;
@@ -41,7 +41,7 @@ float CylinderDistance(float3 eye, float3 centre, float2 h) {
     return length(max(d,0.0)) + max(min(d.x,0),min(d. y,0));
 }
 
-float TubeDistance(float3 eye, float3 centre, float2 radius_height, float3 rotation) { //TODO:roation (apply inverse to eye?)
+float TubeDistance(float3 eye, float3 centre, float2 radius_height, float4 rotation) { //TODO:roation (apply inverse to eye?)
     float2 d = abs(float2(length((eye).xz), eye.y)) - radius_height;
     return length(max(d,0.0)) + max(min(d.x,0),min(d. y,0));
 }

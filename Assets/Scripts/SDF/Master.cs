@@ -184,7 +184,7 @@ public class Master : MonoBehaviour
     struct ShapeData
     {
         public Vector3 position;
-        public Vector3 rotation;
+        public Vector4 rotation;
         public Vector3 scale;
         public Vector3 colour;
         public float lightness;
@@ -195,7 +195,7 @@ public class Master : MonoBehaviour
 
         public static int GetSize()
         {
-            return sizeof(float) * 14 + sizeof(int) * 3;
+            return sizeof(float) * 15 + sizeof(int) * 3;
         }
     }
 }

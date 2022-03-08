@@ -22,9 +22,9 @@ public class Shape : MonoBehaviour
             return transform.position;
         }
     }
-    public Vector3 Rotation {
+    public Vector4 Rotation {
         get {
-            return transform.forward;
+            return transform.rotation;
         }
     }
 
