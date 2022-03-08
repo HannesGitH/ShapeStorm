@@ -1,6 +1,7 @@
 struct Shape {
     
     float3 position;
+    float3 rotation;
     float3 size;
     float3 colour;
     float lightness;
@@ -40,7 +41,7 @@ float CylinderDistance(float3 eye, float3 centre, float2 h) {
     return length(max(d,0.0)) + max(min(d.x,0),min(d. y,0));
 }
 
-float TubeDistance(float3 eye, float3 centre, float2 radius_height, float3 rotation) { //TODO:roation
+float TubeDistance(float3 eye, float3 centre, float2 radius_height, float3 rotation) { //TODO:roation (apply inverse to eye?)
     float2 d = abs(float2(length((eye).xz), eye.y)) - radius_height;
     return length(max(d,0.0)) + max(min(d.x,0),min(d. y,0));
 }
@@ -57,7 +58,7 @@ float GetShapeDistance(Shape shape, float3 eye) {
         return TorusDistance(eye, shape.position, shape.size.x, shape.size.y);
     }
     else if (shape.shapeType == 3) {
-        return TubeDistance(eye, shape.position, shape.size.xy, shape.position.xyz);//XXX: rotation
+        return TubeDistance(eye, shape.position, shape.size.xy, shape.rotation);
     }
 
     return 1000000;//float.inf?

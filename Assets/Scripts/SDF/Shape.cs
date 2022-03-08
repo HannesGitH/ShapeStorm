@@ -22,6 +22,11 @@ public class Shape : MonoBehaviour
             return transform.position;
         }
     }
+    public Vector3 Rotation {
+        get {
+            return transform.forward;
+        }
+    }
 
     public Vector3 Scale {
         get {
