@@ -9,6 +9,8 @@ public class Master : MonoBehaviour
     public ComputeShader liteMarcher;
 
     public int liteModeAggressor = 16;
+    [Range(0.000001f,1f)]
+    public float liteEps = 0.3f;
 
     public GameObject player;
 
@@ -157,6 +159,7 @@ public class Master : MonoBehaviour
             liteMarcher.SetBool("positionLight", !lightIsDirectional);
             liteMarcher.SetFloat("crazyEffectStrength", 0f);
             liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
+            liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps,0.000001f,1f));
         }
     }
 

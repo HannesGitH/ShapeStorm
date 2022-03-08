@@ -9,6 +9,8 @@ public class EnemyMan : MonoBehaviour
     public GameObject breb;
     public float speed = 5f;
 
+    public float despawnZ = -35f;
+
     private List<GameObject> enemies = new List<GameObject>();
     void Start() {
         for (int y=0; y<2; ++y)
@@ -37,10 +39,19 @@ public class EnemyMan : MonoBehaviour
     }
 
     void Update() {
-        foreach (GameObject enemy in enemies)
+        List<int> indices_to_remove = new List<int>();
+        for (int i = 0; i < enemies.Count; i++)
         {
+            GameObject enemy = enemies[i];
+            if(enemy.transform.position.z <= despawnZ){
+                Destroy(enemy);
+                indices_to_remove.Add(i);
+                break;
+            }
             enemy.transform.Translate(new Vector3(0,0,1f)*Time.deltaTime*-speed);
         }
+        // remove out of bounds enemies from List
+        foreach (int i in indices_to_remove)enemies.RemoveAt(i);
     }
 
     // void OnDestroy() {
