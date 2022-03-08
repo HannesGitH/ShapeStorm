@@ -110,6 +110,7 @@ public class Master : MonoBehaviour
             Vector3 col = new Vector3(s.colour.r, s.colour.g, s.colour.b);
             shapeData[i] = new ShapeData()
             {
+                //TODO: rotation
                 position = s.Position,
                 scale = s.Scale,
                 lightness = s.lightness,
