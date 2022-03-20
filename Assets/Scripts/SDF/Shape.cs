@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+//TODO: repetition
 
 public class Shape : MonoBehaviour
 {

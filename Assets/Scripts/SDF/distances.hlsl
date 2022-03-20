@@ -70,6 +70,7 @@ float LinkDistance( float3 p, float le, float r1, float r2 )
   return length(float2(length(q.xy)-r1,q.z)) - r2;
 }
 
+//TODO: repetition
 float GetShapeDistance(Shape shape, float3 eye) {
 
     eye = rotate_vector(eye,shape.rotation);

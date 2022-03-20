@@ -182,6 +182,7 @@ public class Master : MonoBehaviour
 
 
     struct ShapeData
+//TODO: repetition
     {
         public Vector3 position;
         public Vector4 rotation;
