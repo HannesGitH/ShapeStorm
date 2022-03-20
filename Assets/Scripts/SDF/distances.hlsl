@@ -48,6 +48,28 @@ float TubeDistance(float3 eye, float2 radius_height, float thiccness) {
     return abs(length(max(d,0.0)) + max(min(d.x,0),min(d. y,0)))-thiccness;
 }
 
+float BoxFrameDistance( float3 p, float3 b, float e )
+{
+    p = abs(p  )-b;
+    float3 q = abs(p+e)-e;
+    return min(min(
+        length(max(float3(p.x,q.y,q.z),0.0))+min(max(p.x,max(q.y,q.z)),0.0),
+        length(max(float3(q.x,p.y,q.z),0.0))+min(max(q.x,max(p.y,q.z)),0.0)),
+        length(max(float3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0));
+}
+
+float OctahedronDistance( float3 p, float s)
+{
+  p = abs(p);
+  return (p.x+p.y+p.z-s)*0.57735027;
+}
+
+float LinkDistance( float3 p, float le, float r1, float r2 )
+{
+  float3 q = float3( p.x, max(abs(p.y)-le,0.0), p.z );
+  return length(float2(length(q.xy)-r1,q.z)) - r2;
+}
+
 float GetShapeDistance(Shape shape, float3 eye) {
 
     eye = rotate_vector(eye,shape.rotation);
@@ -64,6 +86,15 @@ float GetShapeDistance(Shape shape, float3 eye) {
     }
     else if (shape.shapeType == 3) {
         return TubeDistance(eye, shape.size.xy,1);
+    }
+    else if (shape.shapeType == 4) {
+        return BoxFrameDistance(eye, shape.size.xyz,0.3);
+    }
+    else if (shape.shapeType == 5) {
+        return OctahedronDistance(eye, shape.size.x);
+    }
+    else if (shape.shapeType == 6) {
+        return LinkDistance(eye, shape.size.x,shape.size.y,shape.size.z);
     }
 
     return 1000000;//float.inf?
