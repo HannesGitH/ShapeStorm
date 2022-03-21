@@ -82,7 +82,7 @@ public class Master : MonoBehaviour
         {
             buffer.Dispose();
         }
-        Graphics.Blit(crashHeatMap, destination);
+        // Graphics.Blit(crashHeatMap, destination);
 
         crashHeatMapImg.texture = crashHeatMap;
         print(crashHeatMap.imageContentsHash);
