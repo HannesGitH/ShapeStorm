@@ -142,7 +142,6 @@ float3 EstimateNormal(float3 p) {
 [numthreads(threadsX,threadsY,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    CrashCheck[id.xy]=float4(1,id.x*0.1,id.y*0.1,0);
     uint width,height;
     Destination.GetDimensions(width, height);
 
@@ -177,6 +176,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         Destination[id.xy*liteModeAggressor-float2(x,y)]=float4(marchSteps*float3(0.05f,0.0125f,0.1f),1);
     }
     }
+
+    CrashCheck[id.xy]=float4(112,id.x*0.1,id.y*0.1,rayDst*10);
     
     success=false;
 

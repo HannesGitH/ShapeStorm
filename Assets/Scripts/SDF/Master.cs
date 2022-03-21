@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
@@ -17,6 +18,7 @@ public class Master : MonoBehaviour
     // public bool usesLiteMode = true; 
 
     RenderTexture target;
+    public RawImage crashHeatMapImg;
     Camera cam;
     Light lightSource;
     List<ComputeBuffer> buffersToDispose;
@@ -63,11 +65,11 @@ public class Master : MonoBehaviour
             
             // didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
             // liteMarcher.SetBuffer(0,"CrashCheck",didCrashResult);
-            didCrash = new RenderTexture(threadGroupsX,threadGroupsY,threadGroupsZ,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear);
-            didCrash.enableRandomWrite = true;
-            didCrash.Create();
+            crashHeatMap = new RenderTexture(threadGroupsX,threadGroupsY,threadGroupsZ,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear);
+            crashHeatMap.enableRandomWrite = true;
+            crashHeatMap.Create();
 
-            liteMarcher.SetTexture(0,"CrashCheck",didCrash);
+            liteMarcher.SetTexture(0,"CrashCheck",crashHeatMap);
 
             liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
 
@@ -75,20 +77,24 @@ public class Master : MonoBehaviour
 
 
         Graphics.Blit(target, destination);
-        // Graphics.Blit(didCrash, destination);
 
         foreach (var buffer in buffersToDispose)
         {
             buffer.Dispose();
         }
+        Graphics.Blit(crashHeatMap, destination);
+
+        crashHeatMapImg.texture = crashHeatMap;
+        print(crashHeatMap.imageContentsHash);
 
     }
     private void OnPostRender() {
         
-            Graphics.DrawTexture(new Rect(),didCrash,null,-1);
+        crashHeatMapImg.texture = crashHeatMap;
+    // Graphics.DrawTexture(new Rect(),CrashHeatMap,null,-1);
     }
 
-    RenderTexture didCrash;
+    RenderTexture crashHeatMap;
 
 
     private void Update()
@@ -96,6 +102,8 @@ public class Master : MonoBehaviour
         // first person kinda
         transform.position = player.transform.position;
         transform.forward = player.transform.forward;
+        crashHeatMapImg.texture = crashHeatMap;
+
     }
 
     void CreateScene()
