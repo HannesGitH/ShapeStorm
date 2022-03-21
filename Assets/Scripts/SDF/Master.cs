@@ -70,6 +70,9 @@ public class Master : MonoBehaviour
             crashHeatMap = new RenderTexture(threadGroupsX,threadGroupsY,threadGroupsZ,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear);
             crashHeatMap.enableRandomWrite = true;
             crashHeatMap.Create();
+            RenderTexture.active = crashHeatMap;
+            GL.Clear(true, true, Color.white);
+            RenderTexture.active = null;
 
             liteMarcher.SetTexture(0,"CrashCheck",crashHeatMap);
 
@@ -97,9 +100,21 @@ public class Master : MonoBehaviour
         int sourceMipLevel = 0;
         Color[] pixels = crashHeatMapTex2D.GetPixels(sourceMipLevel);
         // print(pixels);
+        foreach (Color pixel in pixels)
+        {
+            if (pixel.r<liteEps)
+            {
+                onCrash();
+            }
+        }
         
         // print(crashHeatMap.);
 
+    }
+    private bool weCrashed = false;
+    private void onCrash(){
+        weCrashed = true;
+        print("crashed");
     }
     private void OnPostRender() {
         

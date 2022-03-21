@@ -140,7 +140,7 @@ float3 EstimateNormal(float3 p) {
 #define threadsY 16
 
 [numthreads(threadsX,threadsY,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void CSMain (uint3 groupID : SV_GroupID, uint3 id : SV_DispatchThreadID)
 {
     uint width,height;
     Destination.GetDimensions(width, height);
@@ -180,7 +180,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
     }
 
-    CrashCheck[id.xy]=float4(id.x*0.1,rayDst*0.002f,marchSteps*0.05f,1);
+    float currentDst = rayDst;
+    if(epsilon>currentDst)
+    CrashCheck[groupID.xy]=float4(0,0,0,1);
     
     success=false;
 
