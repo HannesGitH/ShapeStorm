@@ -136,6 +136,7 @@ public class Master : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        if(gameMan.gameIsOver)return;
         if (shake <= 0)
         {
             score.score += .05f;
@@ -149,9 +150,11 @@ public class Master : MonoBehaviour
     }
 
     private Score score;
+    private GameManager gameMan;
     private void Start()
     {
         score = FindObjectOfType<Score>();
+        gameMan = FindObjectOfType<GameManager>();
     }
 
     void CreateScene()

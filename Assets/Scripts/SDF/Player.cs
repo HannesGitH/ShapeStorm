@@ -16,6 +16,8 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(FindObjectOfType<GameManager>().gameIsOver)return;
+
         Vector3 delta = inputMan.getDelta();
         transform.position += delta;
     }
