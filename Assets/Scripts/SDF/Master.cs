@@ -5,7 +5,7 @@ using UnityEngine;
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
 public class Master : MonoBehaviour
 {
-    public ComputeShader raymarching;
+    // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
 
     public int liteModeAggressor = 16;
@@ -14,7 +14,7 @@ public class Master : MonoBehaviour
 
     public GameObject player;
 
-    public bool usesLiteMode = true; //might want to make 2 shaders and use the faster one then
+    // public bool usesLiteMode = true; 
 
     RenderTexture target;
     Camera cam;
@@ -37,26 +37,34 @@ public class Master : MonoBehaviour
         CreateScene();
         SetParameters();
 
-        if (!usesLiteMode)
-        {
-            raymarching.SetTexture(0, "Source", source);
-            raymarching.SetTexture(0, "Destination", target);
+        ComputeBuffer didCrashResult;
 
-            int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f);
-            int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f);
+        // if (!usesLiteMode)
+        // {
+        //     raymarching.SetTexture(0, "Source", source);
+        //     raymarching.SetTexture(0, "Destination", target);
 
-            raymarching.Dispatch(0, threadGroupsX, threadGroupsY, 1);
-        }
-        else
-        {
+        //     int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f);
+        //     int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f);
+
+        //     didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
+        //     raymarching.SetBuffer(0,"CrashCheck",didCrashResult);
+
+        //     raymarching.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        // }
+        // else
+        // {
             liteMarcher.SetTexture(0, "Source", source);
             liteMarcher.SetTexture(0, "Destination", target);
 
             int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f / liteModeAggressor);
             int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f / liteModeAggressor);
 
+            didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
+            liteMarcher.SetBuffer(0,"CrashCheck",didCrashResult);
+
             liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
-        }
+        // }
 
 
         Graphics.Blit(target, destination);
@@ -126,16 +134,16 @@ public class Master : MonoBehaviour
         ComputeBuffer shapeBuffer = new ComputeBuffer(shapeData.Length, ShapeData.GetSize());
         shapeBuffer.SetData(shapeData);
 
-        if (!usesLiteMode)
-        {
-            raymarching.SetBuffer(0, "shapes", shapeBuffer);
-            raymarching.SetInt("numShapes", shapeData.Length);
-        }
-        else
-        {
+        // if (!usesLiteMode)
+        // {
+        //     raymarching.SetBuffer(0, "shapes", shapeBuffer);
+        //     raymarching.SetInt("numShapes", shapeData.Length);
+        // }
+        // else
+        // {
             liteMarcher.SetBuffer(0, "shapes", shapeBuffer);
             liteMarcher.SetInt("numShapes", shapeData.Length);
-        }
+        // }
 
 
         buffersToDispose.Add(shapeBuffer);
@@ -143,17 +151,17 @@ public class Master : MonoBehaviour
 
     void SetParameters()
     {
-        if (!usesLiteMode)
-        {
-            bool lightIsDirectional = lightSource.type == LightType.Directional;
-            raymarching.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
-            raymarching.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
-            raymarching.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
-            raymarching.SetBool("positionLight", !lightIsDirectional);
-            raymarching.SetFloat("crazyEffectStrength", 0f);
-        }
-        else
-        {
+        // if (!usesLiteMode)
+        // {
+        //     bool lightIsDirectional = lightSource.type == LightType.Directional;
+        //     raymarching.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
+        //     raymarching.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
+        //     raymarching.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
+        //     raymarching.SetBool("positionLight", !lightIsDirectional);
+        //     raymarching.SetFloat("crazyEffectStrength", 0f);
+        // }
+        // else
+        // {
             bool lightIsDirectional = lightSource.type == LightType.Directional;
             liteMarcher.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
             liteMarcher.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
@@ -162,7 +170,7 @@ public class Master : MonoBehaviour
             liteMarcher.SetFloat("crazyEffectStrength", 0f);
             liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
             liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps,0.000001f,1f));
-        }
+        // }
     }
 
     void InitRenderTexture()

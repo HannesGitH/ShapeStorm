@@ -1,8 +1,11 @@
-﻿#pragma kernel CSMain
+﻿//depricated
+
+#pragma kernel CSMain
 #include "./distances.hlsl"
 
 Texture2D<float4> Source;
 RWTexture2D<float4> Destination;
+RWStructuredBuffer<int> CrashCheck;
 
 float4x4 _CameraToWorld;
 float4x4 _CameraInverseProjection;
