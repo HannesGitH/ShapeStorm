@@ -97,8 +97,10 @@ public class Master : MonoBehaviour
     {
         shake = 1f;
         print("crashed");
-        if(!isInvincible){
+        if (!isInvincible)
+        {
             weCrashed = true;
+            FindObjectOfType<GameManager>().GameOver();
         }
     }
     private void OnPostRender()
@@ -123,13 +125,33 @@ public class Master : MonoBehaviour
         {
             transform.localPosition += Random.insideUnitSphere * shakeAmount;
             shake -= Time.deltaTime * decreaseFactor;
-            enemyMan.timefactor = 1f-5f*shake;
+            enemyMan.timefactor = 1f - 5f * shake;
         }
         else
         {
             shake = 0.0f;
         }
 
+
+    }
+    private void FixedUpdate()
+    {
+        if (shake <= 0)
+        {
+            score.score += .05f;
+            score.score *= 1.0001f;
+        }
+        else
+        {
+            score.score /= 1.0001f;
+            score.score -= .1f;
+        }
+    }
+
+    private Score score;
+    private void Start()
+    {
+        score = FindObjectOfType<Score>();
     }
 
     void CreateScene()
