@@ -8,6 +8,7 @@ public class Master : MonoBehaviour
 {
 
     public EnemyMan enemyMan;
+    public bool isInvincible = false;
     // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
     [Range(0, 1)]
@@ -94,9 +95,11 @@ public class Master : MonoBehaviour
     private bool weCrashed = false;
     private void onCrash()
     {
-        weCrashed = true;
         shake = 1f;
         print("crashed");
+        if(!isInvincible){
+            weCrashed = true;
+        }
     }
     private void OnPostRender()
     {
