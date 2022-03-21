@@ -7,14 +7,17 @@ public class EnemyMan : MonoBehaviour
 
     public double SpawnLength = 5;
     public float SpawnRadius = 15;
+    public float MaxSize = 15;
+    public float MinSize = 15;
     public float speed = 5f;
-    public int? randomSeed = null;
+    public bool randomSeed = true;
+    public int fixedSeed;
 
     public float despawnZ = -35f;
 
-    private List<GameObject> enemies = new List<GameObject>();
+    private List<Enemy> enemies = new List<Enemy>();
     void Start() {
-        Random.seed = randomSeed ?? (int)(Time.realtimeSinceStartupAsDouble%1)*int.MaxValue;
+        Random.seed = randomSeed ? (int)(Time.realtimeSinceStartupAsDouble%1)*int.MaxValue : fixedSeed;
     //     for (int y=0; y<2; ++y)
     //    {
     //        for (int x=0; x<2; ++x)
@@ -33,9 +36,9 @@ public class EnemyMan : MonoBehaviour
     }
 
     private void DestroyAllEnemies(){
-        foreach (GameObject enemy in enemies)
+        foreach (Enemy enemy in enemies)
         {
-            Destroy(enemy);
+            Destroy(enemy.em);
         }
         enemies.Clear();
     }
@@ -44,14 +47,18 @@ public class EnemyMan : MonoBehaviour
         List<int> indices_to_remove = new List<int>();
         for (int i = 0; i < enemies.Count; i++)
         {
-            GameObject enemy = enemies[i];
+            GameObject enemy = enemies[i].em;
             if(enemy.transform.position.z <= despawnZ){
                 Destroy(enemy);
                 indices_to_remove.Add(i);
                 break;
             }
             enemy.transform.Translate(new Vector3(0,0,1f)*Time.deltaTime*-speed*timefactor);
-            // enemy.transform.RotateAround();
+            //TODO: rotation?
+            // Vector3 curPos = enemy.transform.position;
+            // enemy.transform.position = new Vector3();
+            // enemy.transform.Rotate(enemies[i].rot.eulerAngles, Time.deltaTime*speed*2);
+            // enemy.transform.position = curPos;
         }
         // remove out of bounds enemies from List
         foreach (int i in indices_to_remove)enemies.RemoveAt(i);
@@ -80,9 +87,10 @@ public class EnemyMan : MonoBehaviour
         nextShape.operation = Shape.Operation.None;
         nextShape.shapeType = (Shape.ShapeType)Random.Range(0, System.Enum.GetValues(typeof(Shape.ShapeType)).Length);
         Vector2 icr = Random.insideUnitCircle*SpawnRadius;
-        nextShape.transform.position = new Vector3(icr.x,icr.y,50);
-        nextShape.transform.rotation = Random.rotation;
-        enemies.Add(nextShapeObj);
+        nextShapeObj.transform.position = new Vector3(icr.x,icr.y,50);
+        nextShapeObj.transform.rotation = Random.rotation;
+        nextShapeObj.transform.localScale = Random.insideUnitSphere*(MaxSize-MinSize)+new Vector3(1,1,1)*MinSize;
+        enemies.Add(new Enemy(){em=nextShapeObj,rot=Random.rotation});
     }
     private double timeSinceLastSpawn = 0;
 
@@ -90,5 +98,6 @@ public class EnemyMan : MonoBehaviour
 
 struct Enemy
 {
-    
+    public GameObject em;
+    public Quaternion rot;
 }
