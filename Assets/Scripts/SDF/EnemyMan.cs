@@ -48,7 +48,7 @@ public class EnemyMan : MonoBehaviour
                 indices_to_remove.Add(i);
                 break;
             }
-            enemy.transform.Translate(new Vector3(0,0,1f)*Time.deltaTime*-speed);
+            enemy.transform.Translate(new Vector3(0,0,1f)*Time.deltaTime*-speed*timefactor);
         }
         // remove out of bounds enemies from List
         foreach (int i in indices_to_remove)enemies.RemoveAt(i);
@@ -57,5 +57,7 @@ public class EnemyMan : MonoBehaviour
     // void OnDestroy() {
     //     DestroyImmediate(breb);
     // }
+
+    public float timefactor = 1;
 
 }

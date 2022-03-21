@@ -6,6 +6,8 @@ using UnityEngine.UI;
 [ExecuteInEditMode]
 public class Master : MonoBehaviour
 {
+
+    public EnemyMan enemyMan;
     // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
     [Range(0, 1)]
@@ -93,6 +95,7 @@ public class Master : MonoBehaviour
     private void onCrash()
     {
         weCrashed = true;
+        shake = 1f;
         print("crashed");
     }
     private void OnPostRender()
@@ -103,13 +106,26 @@ public class Master : MonoBehaviour
     }
     private ComputeBuffer didCrashBuffer;
     private int[] didCrashArr;
-
+    float shake = 0;
+    public float shakeAmount = 0.7f;
+    public float decreaseFactor = 1.0f;
     private void Update()
     {
         // first person kinda
         transform.position = player.transform.position;
         transform.forward = player.transform.forward;
         // crashHeatMapImg.texture = crashHeatMap;
+
+        if (shake > 0)
+        {
+            transform.localPosition += Random.insideUnitSphere * shakeAmount;
+            shake -= Time.deltaTime * decreaseFactor;
+            enemyMan.timefactor = 1f-5f*shake;
+        }
+        else
+        {
+            shake = 0.0f;
+        }
 
     }
 
