@@ -360,7 +360,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   liteMarcher: {fileID: 7200000, guid: 2a318e061233649b3acca4f37c8014ca, type: 3}
   debugCrashMap: 0
-  liteModeAggressor: 30
+  liteModeAggressor: 16
   liteEps: 0.3
   player: {fileID: 474434861}
   crashHeatMapImg: {fileID: 1276990697}

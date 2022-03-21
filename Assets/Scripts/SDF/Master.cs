@@ -92,6 +92,7 @@ public class Master : MonoBehaviour
         crashHeatMapTex2D.Apply();
         // crashHeatMapImg.materialForRendering.mainTexture = tmptex;
         crashHeatMapImg.texture = debugCrashMap ? crashHeatMapTex2D : null;
+        crashHeatMapImg.color = new Color(1,1,1,debugCrashMap ? 1 : 0);
         int sourceMipLevel = 0;
         Color[] pixels = crashHeatMapTex2D.GetPixels(sourceMipLevel);
         
