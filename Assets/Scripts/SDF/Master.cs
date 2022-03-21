@@ -84,13 +84,22 @@ public class Master : MonoBehaviour
         }
         // Graphics.Blit(crashHeatMap, destination);
 
-        crashHeatMapImg.texture = crashHeatMap;
-        print(crashHeatMap.imageContentsHash);
+        Texture2D crashHeatMapTex2D = new Texture2D(threadGroupsX,threadGroupsY, TextureFormat.RGB24, false);
+        // ReadPixels looks at the active RenderTexture.
+        RenderTexture.active = crashHeatMap;
+        crashHeatMapTex2D.ReadPixels(new Rect(0, 0, crashHeatMap.width, crashHeatMap.height), 0, 0);
+        crashHeatMapTex2D.Apply();
+        // crashHeatMapImg.materialForRendering.mainTexture = tmptex;
+        crashHeatMapImg.texture = crashHeatMapTex2D;
+        int sourceMipLevel = 0;
+        Color[] pixels = crashHeatMapTex2D.GetPixels(sourceMipLevel);
+        
+        // print(crashHeatMap.);
 
     }
     private void OnPostRender() {
         
-        crashHeatMapImg.texture = crashHeatMap;
+        // crashHeatMapImg.texture = crashHeatMap;
     // Graphics.DrawTexture(new Rect(),CrashHeatMap,null,-1);
     }
 
@@ -102,7 +111,7 @@ public class Master : MonoBehaviour
         // first person kinda
         transform.position = player.transform.position;
         transform.forward = player.transform.forward;
-        crashHeatMapImg.texture = crashHeatMap;
+        // crashHeatMapImg.texture = crashHeatMap;
 
     }
 

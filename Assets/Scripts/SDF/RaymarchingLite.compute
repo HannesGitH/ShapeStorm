@@ -177,7 +177,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
     }
 
-    CrashCheck[id.xy]=float4(rayDst*0.01,0,0,0.5);
+    CrashCheck[id.xy]=float4(rayDst*0.02*rayDst*0.02,liteModeAggressor/32.0,rayDst*0.02,1);
     
     success=false;
 
