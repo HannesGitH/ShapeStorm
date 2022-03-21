@@ -3,15 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-[ExecuteInEditMode, ImageEffectAllowedInSceneView]
+[ExecuteInEditMode]
 public class Master : MonoBehaviour
 {
     // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
-    public bool debugCrashMap = false;
+    [Range(0,1)]
+    public float crashMapVisibility = 0;
 
     public int liteModeAggressor = 16;
-    [Range(0.000001f,1f)]
+    [Range(0.00001f,1f)]
     public float liteEps = 0.3f;
 
     public GameObject player;
@@ -91,10 +92,11 @@ public class Master : MonoBehaviour
         crashHeatMapTex2D.ReadPixels(new Rect(0, 0, crashHeatMap.width, crashHeatMap.height), 0, 0);
         crashHeatMapTex2D.Apply();
         // crashHeatMapImg.materialForRendering.mainTexture = tmptex;
-        crashHeatMapImg.texture = debugCrashMap ? crashHeatMapTex2D : null;
-        crashHeatMapImg.color = new Color(1,1,1,debugCrashMap ? 1 : 0);
+        crashHeatMapImg.texture = crashMapVisibility>0 ? crashHeatMapTex2D : null;
+        crashHeatMapImg.color = new Color(1,1,1,crashMapVisibility);
         int sourceMipLevel = 0;
         Color[] pixels = crashHeatMapTex2D.GetPixels(sourceMipLevel);
+        // print(pixels);
         
         // print(crashHeatMap.);
 
@@ -204,7 +206,7 @@ public class Master : MonoBehaviour
             liteMarcher.SetBool("positionLight", !lightIsDirectional);
             liteMarcher.SetFloat("crazyEffectStrength", 0f);
             liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
-            liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps,0.000001f,1f));
+            liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps,0.00001f,1f));
         // }
     }
 
