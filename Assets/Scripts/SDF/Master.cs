@@ -8,6 +8,7 @@ public class Master : MonoBehaviour
 {
     // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
+    public bool debugCrashMap = false;
 
     public int liteModeAggressor = 16;
     [Range(0.000001f,1f)]
@@ -84,13 +85,13 @@ public class Master : MonoBehaviour
         }
         // Graphics.Blit(crashHeatMap, destination);
 
-        Texture2D crashHeatMapTex2D = new Texture2D(threadGroupsX,threadGroupsY, TextureFormat.RGB24, false);
+        Texture2D crashHeatMapTex2D = new Texture2D(threadGroupsX,threadGroupsY, TextureFormat.RGBAFloat, false);
         // ReadPixels looks at the active RenderTexture.
         RenderTexture.active = crashHeatMap;
         crashHeatMapTex2D.ReadPixels(new Rect(0, 0, crashHeatMap.width, crashHeatMap.height), 0, 0);
         crashHeatMapTex2D.Apply();
         // crashHeatMapImg.materialForRendering.mainTexture = tmptex;
-        crashHeatMapImg.texture = crashHeatMapTex2D;
+        crashHeatMapImg.texture = debugCrashMap ? crashHeatMapTex2D : null;
         int sourceMipLevel = 0;
         Color[] pixels = crashHeatMapTex2D.GetPixels(sourceMipLevel);
         
