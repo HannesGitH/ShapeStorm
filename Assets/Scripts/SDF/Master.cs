@@ -8,11 +8,10 @@ public class Master : MonoBehaviour
 {
     // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
-    [Range(0,1)]
-    public float crashMapVisibility = 0;
+    [Range(0, 1)]
 
     public int liteModeAggressor = 16;
-    [Range(0.00001f,1f)]
+    [Range(0.00001f, 1f)]
     public float liteEps = 0.3f;
 
     public GameObject player;
@@ -20,7 +19,6 @@ public class Master : MonoBehaviour
     // public bool usesLiteMode = true; 
 
     RenderTexture target;
-    public RawImage crashHeatMapImg;
     Camera cam;
     Light lightSource;
     List<ComputeBuffer> buffersToDispose;
@@ -58,72 +56,53 @@ public class Master : MonoBehaviour
         // }
         // else
         // {
-            liteMarcher.SetTexture(0, "Source", source);
-            liteMarcher.SetTexture(0, "Destination", target);
+        liteMarcher.SetTexture(0, "Source", source);
+        liteMarcher.SetTexture(0, "Destination", target);
 
-            int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f / liteModeAggressor)+1;
-            int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f / liteModeAggressor)+1;
-            int threadGroupsZ = 0;
-            
-            // didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
-            // liteMarcher.SetBuffer(0,"CrashCheck",didCrashResult);
-            crashHeatMap = new RenderTexture(threadGroupsX,threadGroupsY,threadGroupsZ,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear);
-            crashHeatMap.enableRandomWrite = true;
-            crashHeatMap.Create();
-            RenderTexture.active = crashHeatMap;
-            GL.Clear(true, true, Color.white);
-            RenderTexture.active = null;
+        int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f / liteModeAggressor) + 1;
+        int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f / liteModeAggressor) + 1;
 
-            liteMarcher.SetTexture(0,"CrashCheck",crashHeatMap);
-
-            liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
 
         // }
 
 
         Graphics.Blit(target, destination);
 
-        foreach (var buffer in buffersToDispose)
-        {
-            buffer.Dispose();
-        }
-        // Graphics.Blit(crashHeatMap, destination);
 
-        Texture2D crashHeatMapTex2D = new Texture2D(threadGroupsX,threadGroupsY, TextureFormat.RGBAFloat, false);
-        // ReadPixels looks at the active RenderTexture.
-        RenderTexture.active = crashHeatMap;
-        crashHeatMapTex2D.ReadPixels(new Rect(0, 0, crashHeatMap.width, crashHeatMap.height), 0, 0);
-        crashHeatMapTex2D.Apply();
-        // crashHeatMapImg.materialForRendering.mainTexture = tmptex;
-        crashHeatMapImg.texture = crashMapVisibility>0 ? crashHeatMapTex2D : null;
-        crashHeatMapImg.color = new Color(1,1,1,crashMapVisibility);
-        int sourceMipLevel = 0;
-        Color[] pixels = crashHeatMapTex2D.GetPixels(sourceMipLevel);
         // print(pixels);
-        foreach (Color pixel in pixels)
+        didCrashArr = new int[1] { 0 };
+        didCrashBuffer.GetData(didCrashArr);
+        foreach (int crash in didCrashArr)
         {
-            if (pixel.r<liteEps)
+            if (crash > 0)
             {
                 onCrash();
             }
         }
-        
+
+        foreach (var buffer in buffersToDispose)
+        {
+            buffer.Dispose();
+        }
+
         // print(crashHeatMap.);
 
     }
     private bool weCrashed = false;
-    private void onCrash(){
+    private void onCrash()
+    {
         weCrashed = true;
         print("crashed");
     }
-    private void OnPostRender() {
-        
+    private void OnPostRender()
+    {
+
         // crashHeatMapImg.texture = crashHeatMap;
-    // Graphics.DrawTexture(new Rect(),CrashHeatMap,null,-1);
+        // Graphics.DrawTexture(new Rect(),CrashHeatMap,null,-1);
     }
-
-    RenderTexture crashHeatMap;
-
+    private ComputeBuffer didCrashBuffer;
+    private int[] didCrashArr;
 
     private void Update()
     {
@@ -193,8 +172,8 @@ public class Master : MonoBehaviour
         // }
         // else
         // {
-            liteMarcher.SetBuffer(0, "shapes", shapeBuffer);
-            liteMarcher.SetInt("numShapes", shapeData.Length);
+        liteMarcher.SetBuffer(0, "shapes", shapeBuffer);
+        liteMarcher.SetInt("numShapes", shapeData.Length);
         // }
 
 
@@ -214,14 +193,19 @@ public class Master : MonoBehaviour
         // }
         // else
         // {
-            bool lightIsDirectional = lightSource.type == LightType.Directional;
-            liteMarcher.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
-            liteMarcher.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
-            liteMarcher.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
-            liteMarcher.SetBool("positionLight", !lightIsDirectional);
-            liteMarcher.SetFloat("crazyEffectStrength", 0f);
-            liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
-            liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps,0.00001f,1f));
+
+        didCrashBuffer = new ComputeBuffer(1, sizeof(int));
+        didCrashBuffer.SetData(new int[1] { 0 });
+        liteMarcher.SetBuffer(0, "CrashCheck", didCrashBuffer);
+        buffersToDispose.Add(didCrashBuffer);
+        bool lightIsDirectional = lightSource.type == LightType.Directional;
+        liteMarcher.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
+        liteMarcher.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
+        liteMarcher.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
+        liteMarcher.SetBool("positionLight", !lightIsDirectional);
+        liteMarcher.SetFloat("crazyEffectStrength", 0f);
+        liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
+        liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps, 0.00001f, 1f));
         // }
     }
 
@@ -242,7 +226,7 @@ public class Master : MonoBehaviour
 
 
     struct ShapeData
-//TODO: repetition
+    //TODO: repetition
     {
         public Vector3 position;
         public Vector4 rotation;
