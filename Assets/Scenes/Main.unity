@@ -1129,10 +1129,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd66e00ba8dcf4e249b941d7f56d4b6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SpawnLength: 0.05
+  SpawnLength: 8
   SpawnRadius: 15
   MaxSize: 10
-  MinSize: 5
+  MinSize: 0.5
   speed: 10
   randomSeed: 0
   fixedSeed: 5

@@ -11,7 +11,6 @@ public class Master : MonoBehaviour
     public bool isInvincible = false;
     // public ComputeShader raymarching;
     public ComputeShader liteMarcher;
-    [Range(0, 1)]
 
     public int liteModeAggressor = 16;
     [Range(0.00001f, 1f)]
@@ -100,8 +99,14 @@ public class Master : MonoBehaviour
         if (!isInvincible)
         {
             weCrashed = true;
-            FindObjectOfType<GameManager>().GameOver();
+            StartCoroutine(fail(1));
         }
+    }
+
+    IEnumerator<WaitForSeconds> fail(int secs)
+    {
+        yield return new WaitForSeconds(secs);
+        FindObjectOfType<GameManager>().GameOver();
     }
     private void OnPostRender()
     {

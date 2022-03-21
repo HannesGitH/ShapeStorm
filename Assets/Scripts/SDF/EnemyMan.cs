@@ -15,8 +15,11 @@ public class EnemyMan : MonoBehaviour
 
     public float despawnZ = -35f;
 
-    private List<Enemy> enemies = new List<Enemy>();
-    void Start() {
+    private List<Enemy> enemies = new List<Enemy>();    
+    private Score score;
+    private void Start()
+    {
+        score = FindObjectOfType<Score>();
         Random.seed = randomSeed ? (int)(Time.realtimeSinceStartupAsDouble%1)*int.MaxValue : fixedSeed;
     //     for (int y=0; y<2; ++y)
     //    {
@@ -49,6 +52,7 @@ public class EnemyMan : MonoBehaviour
         {
             GameObject enemy = enemies[i].em;
             if(enemy.transform.position.z <= despawnZ){
+                Debug.Log("destroyed "+enemy.name);
                 Destroy(enemy);
                 indices_to_remove.Add(i);
                 break;
@@ -74,23 +78,25 @@ public class EnemyMan : MonoBehaviour
 
     private void randomSpawn(){
         timeSinceLastSpawn += Time.deltaTime;
-        if (Random.value*timeSinceLastSpawn>SpawnLength)
+        if (Random.value*timeSinceLastSpawn*score.score>SpawnLength)
         {
             timeSinceLastSpawn = 0;
             SpawnRandomShape();
         }
     }
     private void SpawnRandomShape(){
-        GameObject nextShapeObj = new GameObject("shape");
+        GameObject nextShapeObj = new GameObject("shape-"+Random.value.ToString());
         nextShapeObj.AddComponent<Shape>();
         Shape nextShape = nextShapeObj.GetComponent<Shape>();
         nextShape.operation = Shape.Operation.None;
         nextShape.shapeType = (Shape.ShapeType)Random.Range(0, System.Enum.GetValues(typeof(Shape.ShapeType)).Length);
         Vector2 icr = Random.insideUnitCircle*SpawnRadius;
-        nextShapeObj.transform.position = new Vector3(icr.x,icr.y,50);
-        nextShapeObj.transform.rotation = Random.rotation;
+        nextShapeObj.transform.position = new Vector3(icr.x,icr.y,30);
+        //todo:roatation along its own centre
+        // nextShapeObj.transform.rotation = Random.rotation;
         nextShapeObj.transform.localScale = Random.insideUnitSphere*(MaxSize-MinSize)+new Vector3(1,1,1)*MinSize;
         enemies.Add(new Enemy(){em=nextShapeObj,rot=Random.rotation});
+        Debug.Log("spawned an enemy, list has objs: "+enemies.Count);
     }
     private double timeSinceLastSpawn = 0;
 
