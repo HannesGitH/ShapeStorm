@@ -37,7 +37,7 @@ public class Master : MonoBehaviour
         CreateScene();
         SetParameters();
 
-        ComputeBuffer didCrashResult;
+        // ComputeBuffer didCrashResult;
 
         // if (!usesLiteMode)
         // {
@@ -57,23 +57,39 @@ public class Master : MonoBehaviour
             liteMarcher.SetTexture(0, "Source", source);
             liteMarcher.SetTexture(0, "Destination", target);
 
-            int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f / liteModeAggressor);
-            int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f / liteModeAggressor);
+            int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f / liteModeAggressor)+1;
+            int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f / liteModeAggressor)+1;
+            int threadGroupsZ = 0;
+            
+            // didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
+            // liteMarcher.SetBuffer(0,"CrashCheck",didCrashResult);
+            didCrash = new RenderTexture(threadGroupsX,threadGroupsY,threadGroupsZ,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear);
+            didCrash.enableRandomWrite = true;
+            didCrash.Create();
 
-            didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
-            liteMarcher.SetBuffer(0,"CrashCheck",didCrashResult);
+            liteMarcher.SetTexture(0,"CrashCheck",didCrash);
 
             liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+
         // }
 
 
         Graphics.Blit(target, destination);
+        // Graphics.Blit(didCrash, destination);
 
         foreach (var buffer in buffersToDispose)
         {
             buffer.Dispose();
         }
+
     }
+    private void OnPostRender() {
+        
+            Graphics.DrawTexture(new Rect(),didCrash,null,-1);
+    }
+
+    RenderTexture didCrash;
+
 
     private void Update()
     {

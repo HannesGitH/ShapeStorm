@@ -3,7 +3,7 @@
 
 Texture2D<float4> Source;
 RWTexture2D<float4> Destination;
-RWStructuredBuffer<int> CrashCheck;
+RWTexture2D<float4> CrashCheck;
 
 float4x4 _CameraToWorld;
 float4x4 _CameraInverseProjection;
@@ -136,10 +136,13 @@ float3 EstimateNormal(float3 p) {
 //     }
 //     return shadowIntensity + (1-shadowIntensity) * brightness;
 // }
+#define threadsX 16
+#define threadsY 16
 
-[numthreads(16,16,1)]
+[numthreads(threadsX,threadsY,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
+    CrashCheck[id.xy]=float4(1,id.x*0.1,id.y*0.1,0);
     uint width,height;
     Destination.GetDimensions(width, height);
 
