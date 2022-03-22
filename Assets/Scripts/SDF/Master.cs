@@ -50,31 +50,24 @@ public class Master : MonoBehaviour
 
         liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
 
+
         Graphics.Blit(target, destination);
 
-        if(DidCrash(transform.position))onCrash();
 
-        DestroyBuffers();
-        // print(crashHeatMap.);
-    }
-
-    public bool DidCrash(Vector3 pos){        
-        didCrashBuffer = new ComputeBuffer(1, sizeof(float));
-        didCrashBuffer.SetData(new float[1] { 0});
-        liteMarcher.SetBuffer(0, "CrashCheck", didCrashBuffer);
-        liteMarcher.SetFloats("currentPoint",pos.x,pos.y,pos.z);
-        didCrashArr = new float[1] { 0 };        
-        liteMarcher.Dispatch(1, 1, 1, 1);
+        // print(pixels);
+        didCrashArr = new int[1] { 0 };
         didCrashBuffer.GetData(didCrashArr);
-        didCrashBuffer.Dispose();
         foreach (int crash in didCrashArr)
         {
             if (crash > 0)
             {
-               return true;
+                onCrash();
             }
         }
-        return false;
+
+        DestroyBuffers();
+        // print(crashHeatMap.);
+
     }
     private bool weCrashed = false;
     private void onCrash()
@@ -100,7 +93,7 @@ public class Master : MonoBehaviour
         // Graphics.DrawTexture(new Rect(),CrashHeatMap,null,-1);
     }
     private ComputeBuffer didCrashBuffer;
-    private float[] didCrashArr;
+    private int[] didCrashArr;
     float shake = 0;
     public float shakeAmount = 0.7f;
     public float decreaseFactor = 1.0f;
@@ -226,6 +219,10 @@ public class Master : MonoBehaviour
     }
     void SetFinalParameters()
     {
+        didCrashBuffer = new ComputeBuffer(1, sizeof(int));
+        didCrashBuffer.SetData(new int[1] { 0 });
+        liteMarcher.SetBuffer(0, "CrashCheck", didCrashBuffer);
+        buffersToDispose.Add(didCrashBuffer);
         bool lightIsDirectional = lightSource.type == LightType.Directional;
         liteMarcher.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         liteMarcher.SetBool("positionLight", !lightIsDirectional);
