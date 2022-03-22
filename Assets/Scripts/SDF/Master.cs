@@ -32,11 +32,9 @@ public class Master : MonoBehaviour
         lightSource = FindObjectOfType<Light>();
     }
 
-    
+
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        Init();
-        buffersToDispose = new List<ComputeBuffer>();
 
         InitRenderTexture();
         CreateScene();
@@ -65,7 +63,6 @@ public class Master : MonoBehaviour
             }
         }
 
-        DestroyBuffers();
         // print(crashHeatMap.);
 
     }
@@ -93,6 +90,7 @@ public class Master : MonoBehaviour
         // Graphics.DrawTexture(new Rect(),CrashHeatMap,null,-1);
     }
     private ComputeBuffer didCrashBuffer;
+    private ComputeBuffer shapeBuffer;
     private int[] didCrashArr;
     float shake = 0;
     public float shakeAmount = 0.7f;
@@ -119,7 +117,7 @@ public class Master : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if(gameMan.gameIsOver)return;
+        if (gameMan.gameIsOver) return;
         if (shake <= 0)
         {
             score.score += .05f;
@@ -134,19 +132,27 @@ public class Master : MonoBehaviour
 
     private Score score;
     private GameManager gameMan;
-    private void Start()
+    private void Awake()
     {
         score = FindObjectOfType<Score>();
         gameMan = FindObjectOfType<GameManager>();
+        buffersToDispose = new List<ComputeBuffer>();
+        didCrashBuffer = new ComputeBuffer(1, sizeof(int));
+        buffersToDispose.Add(didCrashBuffer);
+        buffersToDispose.Add(shapeBuffer);
+        Init();
+        // SetFinalParameters();
     }
-    private void OnDestroy() {
+    private void OnDestroy()
+    {
         DestroyBuffers();
     }
 
-    private void DestroyBuffers(){
+    private void DestroyBuffers()
+    {
         foreach (var buffer in buffersToDispose)
         {
-            buffer.Dispose();
+            buffer.Release();
         }
     }
 
@@ -199,7 +205,7 @@ public class Master : MonoBehaviour
             };
         }
 
-        ComputeBuffer shapeBuffer = new ComputeBuffer(shapeData.Length, ShapeData.GetSize());
+        shapeBuffer = new ComputeBuffer(shapeData.Length, ShapeData.GetSize());
         shapeBuffer.SetData(shapeData);
 
 
@@ -207,7 +213,6 @@ public class Master : MonoBehaviour
         liteMarcher.SetInt("numShapes", shapeData.Length);
 
 
-        buffersToDispose.Add(shapeBuffer);
     }
 
     void SetParameters()
@@ -219,10 +224,8 @@ public class Master : MonoBehaviour
     }
     void SetFinalParameters()
     {
-        didCrashBuffer = new ComputeBuffer(1, sizeof(int));
         didCrashBuffer.SetData(new int[1] { 0 });
         liteMarcher.SetBuffer(0, "CrashCheck", didCrashBuffer);
-        buffersToDispose.Add(didCrashBuffer);
         bool lightIsDirectional = lightSource.type == LightType.Directional;
         liteMarcher.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         liteMarcher.SetBool("positionLight", !lightIsDirectional);
