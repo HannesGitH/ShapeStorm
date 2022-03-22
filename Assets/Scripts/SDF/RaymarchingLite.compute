@@ -15,7 +15,7 @@ bool positionLight;
 int liteModeAggressor = 16;
 float epsilon = 0.3f ;
 
-static const float maxDst = 40;
+float maxDst = 40;
 static const float shadowBias = epsilon * 50;
 
 StructuredBuffer<Shape> shapes;

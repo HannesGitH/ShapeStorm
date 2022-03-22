@@ -540,8 +540,9 @@ MonoBehaviour:
   enemyMan: {fileID: 2127447575}
   isInvincible: 0
   liteMarcher: {fileID: 7200000, guid: 2a318e061233649b3acca4f37c8014ca, type: 3}
-  liteModeAggressor: 8
-  liteEps: 0.3
+  liteModeAggressor: 1
+  liteEps: 0.4
+  renderDistance: 40
   player: {fileID: 474434861}
   shakeAmount: 0.7
   decreaseFactor: 1
@@ -855,56 +856,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1346157163}
   m_CullTransparentMesh: 1
---- !u!1 &1455411280
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1455411282}
-  - component: {fileID: 1455411281}
-  m_Layer: 0
-  m_Name: test
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1455411281
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1455411280}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b751b99fe7674499f882f8c7e4148ff4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shapeType: 4
-  operation: 0
-  colour: {r: 1, g: 1, b: 1, a: 1}
-  lightness: 0.2
-  blendStrength: 0
-  numChildren: 0
---- !u!4 &1455411282
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1455411280}
-  m_LocalRotation: {x: 0.1359856, y: 0.30055094, z: 0.35363764, w: 0.8752814}
-  m_LocalPosition: {x: 0, y: 0, z: 10}
-  m_LocalScale: {x: 14.5, y: 7.17, z: 9.6}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 7
-  m_LocalEulerAnglesHint: {x: 1.46, y: 38.5, z: 44.51}
 --- !u!1 &1660815653
 GameObject:
   m_ObjectHideFlags: 0
@@ -1143,7 +1094,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1949095367}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 2.01, y: -8.4, z: 4.92}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 30, y: 100, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1179,8 +1130,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd66e00ba8dcf4e249b941d7f56d4b6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SpawnLength: 2
-  SpawnRadius: 15
+  SpawnLength: 0.5
+  SpawnRadius: 30
   MaxSize: 10
   MinSize: 0.5
   speed: 10
@@ -1196,7 +1147,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2127447574}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2, y: 3, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -15,6 +15,7 @@ public class Master : MonoBehaviour
     public int liteModeAggressor = 16;
     [Range(0.00001f, 1f)]
     public float liteEps = 0.3f;
+    public float renderDistance = 40f;
 
     public GameObject player;
 
@@ -253,6 +254,7 @@ public class Master : MonoBehaviour
         liteMarcher.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         liteMarcher.SetBool("positionLight", !lightIsDirectional);
         liteMarcher.SetFloat("crazyEffectStrength", 0f);
+        liteMarcher.SetFloat("maxDst", renderDistance);
         liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
         liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps, 0.00001f, 1f));
         // }

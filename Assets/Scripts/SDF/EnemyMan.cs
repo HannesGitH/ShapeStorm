@@ -66,7 +66,7 @@ public class EnemyMan : MonoBehaviour
             //TODO: rotation?
             // Vector3 curPos = enemy.transform.position;
             // enemy.transform.position = new Vector3();
-            enemy.transform.Rotate(enemies[i].rot.eulerAngles, Time.deltaTime*speed);
+            enemy.transform.Rotate(enemies[i].rot.eulerAngles, Time.deltaTime*speed*3);
             // enemy.transform.eulerAngles+=enemies[i].rot.eulerAngles*Time.deltaTime*speed*0.2f;
             // enemy.transform.position = curPos;
             // enemy.transform.LookAt(enemies[i].rot.eulerAngles*(float)Time.realtimeSinceStartupAsDouble/20000f);
@@ -97,7 +97,8 @@ public class EnemyMan : MonoBehaviour
         GameObject nextShapeObj = new GameObject("shape-" + Random.value.ToString());
         nextShapeObj.AddComponent<Shape>();
         Shape nextShape = nextShapeObj.GetComponent<Shape>();
-        nextShape.operation = Shape.Operation.None;//TODO: blend and stuff?
+        nextShape.operation = Shape.Operation.Blend;//TODO: blend and stuff?
+        nextShape.blendStrength = Random.value;
         nextShape.shapeType = (Shape.ShapeType)Random.Range(0, System.Enum.GetValues(typeof(Shape.ShapeType)).Length);
         Vector2 icr = Random.insideUnitCircle * SpawnRadius;
         nextShapeObj.transform.position = new Vector3(icr.x, icr.y, 30);
