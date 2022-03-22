@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-[ExecuteInEditMode]
+[ExecuteInEditMode]//, ImageEffectAllowedInSceneView]
 public class Master : MonoBehaviour
 {
 
