@@ -32,7 +32,7 @@ public class Master : MonoBehaviour
         lightSource = FindObjectOfType<Light>();
     }
 
-
+    
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         Init();
@@ -42,23 +42,6 @@ public class Master : MonoBehaviour
         CreateScene();
         SetParameters();
 
-        // ComputeBuffer didCrashResult;
-
-        // if (!usesLiteMode)
-        // {
-        //     raymarching.SetTexture(0, "Source", source);
-        //     raymarching.SetTexture(0, "Destination", target);
-
-        //     int threadGroupsX = Mathf.CeilToInt(cam.pixelWidth / 16.0f);
-        //     int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f);
-
-        //     didCrashResult = new ComputeBuffer(threadGroupsX*threadGroupsY,sizeof(int));
-        //     raymarching.SetBuffer(0,"CrashCheck",didCrashResult);
-
-        //     raymarching.Dispatch(0, threadGroupsX, threadGroupsY, 1);
-        // }
-        // else
-        // {
         liteMarcher.SetTexture(0, "Source", source);
         liteMarcher.SetTexture(0, "Destination", target);
 
@@ -66,8 +49,6 @@ public class Master : MonoBehaviour
         int threadGroupsY = Mathf.CeilToInt(cam.pixelHeight / 16.0f / liteModeAggressor) + 1;
 
         liteMarcher.Dispatch(0, threadGroupsX, threadGroupsY, 1);
-
-        // }
 
 
         Graphics.Blit(target, destination);
@@ -84,11 +65,7 @@ public class Master : MonoBehaviour
             }
         }
 
-        foreach (var buffer in buffersToDispose)
-        {
-            buffer.Dispose();
-        }
-
+        DestroyBuffers();
         // print(crashHeatMap.);
 
     }
@@ -162,6 +139,16 @@ public class Master : MonoBehaviour
         score = FindObjectOfType<Score>();
         gameMan = FindObjectOfType<GameManager>();
     }
+    private void OnDestroy() {
+        DestroyBuffers();
+    }
+
+    private void DestroyBuffers(){
+        foreach (var buffer in buffersToDispose)
+        {
+            buffer.Dispose();
+        }
+    }
 
     void CreateScene()
     {
@@ -215,16 +202,9 @@ public class Master : MonoBehaviour
         ComputeBuffer shapeBuffer = new ComputeBuffer(shapeData.Length, ShapeData.GetSize());
         shapeBuffer.SetData(shapeData);
 
-        // if (!usesLiteMode)
-        // {
-        //     raymarching.SetBuffer(0, "shapes", shapeBuffer);
-        //     raymarching.SetInt("numShapes", shapeData.Length);
-        // }
-        // else
-        // {
+
         liteMarcher.SetBuffer(0, "shapes", shapeBuffer);
         liteMarcher.SetInt("numShapes", shapeData.Length);
-        // }
 
 
         buffersToDispose.Add(shapeBuffer);
@@ -232,32 +212,23 @@ public class Master : MonoBehaviour
 
     void SetParameters()
     {
-        // if (!usesLiteMode)
-        // {
-        //     bool lightIsDirectional = lightSource.type == LightType.Directional;
-        //     raymarching.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
-        //     raymarching.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
-        //     raymarching.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
-        //     raymarching.SetBool("positionLight", !lightIsDirectional);
-        //     raymarching.SetFloat("crazyEffectStrength", 0f);
-        // }
-        // else
-        // {
-
+        liteMarcher.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
+        liteMarcher.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
+        // liteMarcher.SetFloat("crazyEffectStrength", 0f);
+        SetFinalParameters();//TODO: do on startup
+    }
+    void SetFinalParameters()
+    {
         didCrashBuffer = new ComputeBuffer(1, sizeof(int));
         didCrashBuffer.SetData(new int[1] { 0 });
         liteMarcher.SetBuffer(0, "CrashCheck", didCrashBuffer);
         buffersToDispose.Add(didCrashBuffer);
         bool lightIsDirectional = lightSource.type == LightType.Directional;
-        liteMarcher.SetMatrix("_CameraToWorld", cam.cameraToWorldMatrix);
-        liteMarcher.SetMatrix("_CameraInverseProjection", cam.projectionMatrix.inverse);
         liteMarcher.SetVector("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         liteMarcher.SetBool("positionLight", !lightIsDirectional);
-        liteMarcher.SetFloat("crazyEffectStrength", 0f);
         liteMarcher.SetFloat("maxDst", renderDistance);
         liteMarcher.SetInt("liteModeAggressor", liteModeAggressor);
         liteMarcher.SetFloat("epsilon", Mathf.Clamp(liteEps, 0.00001f, 1f));
-        // }
     }
 
     void InitRenderTexture()
