@@ -62,7 +62,7 @@ public class Master : MonoBehaviour
 
     private void SetUpCrashDetection(Vector3 pos){
         didCrashBuffer = new ComputeBuffer(1, sizeof(float));
-        // didCrashBuffer.SetData(new float[1] { 0});
+        didCrashBuffer.SetData(new float[1] { 0});
         liteMarcher.SetBuffer(0, "CrashCheck", didCrashBuffer);
         liteMarcher.SetVector("currentPoint",new Vector4 (pos.x,pos.y,pos.z,1));
     }
@@ -70,9 +70,10 @@ public class Master : MonoBehaviour
         didCrashArr = new float[1] { 0 };        
         didCrashBuffer.GetData(didCrashArr);
         didCrashBuffer.Dispose();
-        foreach (int crash in didCrashArr)
+        foreach (float crash in didCrashArr)
         {
-            if (crash > 0)
+            Debug.Log(crash);
+            if (crash > 1)
             {
                return true;
             }

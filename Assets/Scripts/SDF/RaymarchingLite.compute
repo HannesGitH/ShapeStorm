@@ -81,7 +81,6 @@ Ray CreateCameraRay(float2 uv) {
 [numthreads(threadsX,threadsY,1)]
 void CSMain (uint3 groupID : SV_GroupID, uint3 id : SV_DispatchThreadID)
 {
-    CrashCheck[0] = Distance(currentPoint.xyz)/epsilon; //XXX: hm this only needs to run once...
 
     uint width,height;
     Destination.GetDimensions(width, height);
@@ -122,5 +121,6 @@ void CSMain (uint3 groupID : SV_GroupID, uint3 id : SV_DispatchThreadID)
     }
     
     success=false;
+    // CrashCheck[0] = 1;//Distance(currentPoint.xyz); //XXX: hm this only needs to run once...
 
 }

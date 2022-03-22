@@ -57,7 +57,7 @@ public class EnemyMan : MonoBehaviour
             GameObject enemy = enemies[i].em;
             if (enemy.transform.position.z <= despawnZ)
             {
-                Debug.Log("destroyed " + enemy.name);
+                // Debug.Log("destroyed " + enemy.name);
                 Destroy(enemy);
                 indices_to_remove.Add(i);
                 break;
@@ -106,7 +106,7 @@ public class EnemyMan : MonoBehaviour
         nextShapeObj.transform.rotation = Random.rotation;
         nextShapeObj.transform.localScale = Random.insideUnitSphere * (MaxSize - MinSize) + new Vector3(1, 1, 1) * MinSize;
         enemies.Add(new Enemy() { em = nextShapeObj, rot = Random.rotation });
-        Debug.Log("spawned an enemy, list has objs: " + enemies.Count);
+        // Debug.Log("spawned an enemy, list has objs: " + enemies.Count);
     }
     private double scoreDifference = 0;
 
