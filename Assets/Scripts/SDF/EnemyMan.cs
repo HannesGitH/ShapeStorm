@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EnemyMan : MonoBehaviour
 {
-
+    public bool modulateTorusThiccness = false;
     public double SpawnLength = 5;
     public float SpawnRadius = 15;
     public float MaxSize = 15;
@@ -62,6 +62,9 @@ public class EnemyMan : MonoBehaviour
                 indices_to_remove.Add(i);
                 break;
             }
+            if(modulateTorusThiccness && enemy.GetComponent<Shape>().shapeType == Shape.ShapeType.Torus){
+                enemy.transform.localScale += new Vector3(0,Mathf.Sin(Time.realtimeSinceStartup*5f),0)*0.1f;
+            }
             enemy.transform.Translate(new Vector3(0, 0, 1f) * Time.deltaTime * -speed * timefactor, relativeTo: Space.World);
             // Vector3 curPos = enemy.transform.position;
             // enemy.transform.position = new Vector3();
@@ -103,7 +106,7 @@ public class EnemyMan : MonoBehaviour
         Vector2 icr = Random.insideUnitCircle * SpawnRadius;
         nextShapeObj.transform.position = new Vector3(icr.x, icr.y, 30);
         nextShapeObj.transform.rotation = Random.rotation;
-        nextShapeObj.transform.localScale = Random.insideUnitSphere * (MaxSize - MinSize) + new Vector3(1, 1, 1) * MinSize;
+        nextShapeObj.transform.localScale = Random.insideUnitSphere * (MaxSize - MinSize) + (new Vector3(1, 1, 1) * MinSize);
         enemies.Add(new Enemy() { em = nextShapeObj, rot = Random.rotation });
         // Debug.Log("spawned an enemy, list has objs: " + enemies.Count);
     }

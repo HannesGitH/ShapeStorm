@@ -1133,12 +1133,12 @@ MonoBehaviour:
   SpawnLength: 1
   SpawnRadius: 30
   MaxSize: 15
-  MinSize: 2
+  MinSize: 5
   speed: 15
   randomSeed: 1
   fixedSeed: 5
   despawnZ: -40
-  timefactor: 1
+  timefactor: 1.5
 --- !u!4 &2127447576
 Transform:
   m_ObjectHideFlags: 0

@@ -73,7 +73,7 @@ public class Master : MonoBehaviour
         foreach (float crash in didCrashArr)
         {
             // Debug.Log(crash);
-            if (crash > 1)
+            if (crash < liteEps)
             {
                return true;
             }
@@ -84,7 +84,7 @@ public class Master : MonoBehaviour
     private void onCrash()
     {
         shake = 1f;
-        print("crashed");
+        Debug.Log("crashed");
         if (!isInvincible)
         {
             weCrashed = true;

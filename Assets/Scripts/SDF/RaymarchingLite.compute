@@ -97,12 +97,13 @@ void CSMain (uint3 groupID : SV_GroupID, uint3 id : SV_DispatchThreadID)
     float sceneInfo;
     float dst;
     bool success = false;
+    
     while (rayDst < maxDst) {
         marchSteps ++;
         dst = Distance(ray.origin);
-        // if (marchSteps==1){
-        //     CrashCheck[id.xy]=float4(1-(dst*0.025),0,0,1);
-        // }
+        if (marchSteps==1){
+            CrashCheck[0] = dst;//TODO:Distance(currentPoint.xyz); //XXX: hm this only needs to run once...
+        }
         
         if (dst <= epsilon) {
             success = true;
@@ -121,6 +122,5 @@ void CSMain (uint3 groupID : SV_GroupID, uint3 id : SV_DispatchThreadID)
     }
     
     success=false;
-    // CrashCheck[0] = 1;//Distance(currentPoint.xyz); //XXX: hm this only needs to run once...
 
 }
