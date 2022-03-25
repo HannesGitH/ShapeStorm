@@ -99,7 +99,7 @@ public class EnemyMan : MonoBehaviour
         Shape nextShape = nextShapeObj.GetComponent<Shape>();
         nextShape.operation = Shape.Operation.Blend;//TODO: blend and stuff?
         nextShape.blendStrength = Random.value;
-        nextShape.shapeType = (Shape.ShapeType)Random.Range(0, System.Enum.GetValues(typeof(Shape.ShapeType)).Length);
+        nextShape.shapeType = (Shape.ShapeType)(Random.Range(0, System.Enum.GetValues(typeof(Shape.ShapeType)).Length-1)+1);
         Vector2 icr = Random.insideUnitCircle * SpawnRadius;
         nextShapeObj.transform.position = new Vector3(icr.x, icr.y, 30);
         //todo:roatation along its own centre
