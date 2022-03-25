@@ -63,7 +63,6 @@ public class EnemyMan : MonoBehaviour
                 break;
             }
             enemy.transform.Translate(new Vector3(0, 0, 1f) * Time.deltaTime * -speed * timefactor, relativeTo: Space.World);
-            //TODO: rotation?
             // Vector3 curPos = enemy.transform.position;
             // enemy.transform.position = new Vector3();
             enemy.transform.Rotate(enemies[i].rot.eulerAngles, Time.deltaTime*speed*3);
@@ -97,19 +96,18 @@ public class EnemyMan : MonoBehaviour
         GameObject nextShapeObj = new GameObject("shape-" + Random.value.ToString());
         nextShapeObj.AddComponent<Shape>();
         Shape nextShape = nextShapeObj.GetComponent<Shape>();
-        nextShape.operation = Shape.Operation.Blend;//TODO: blend and stuff?
+        // nextShape.operation = Shape.Operation.Blend;
+        nextShape.operation = Shape.Operation.None;
         nextShape.blendStrength = Random.value;
         nextShape.shapeType = (Shape.ShapeType)(Random.Range(0, System.Enum.GetValues(typeof(Shape.ShapeType)).Length-1)+1);
         Vector2 icr = Random.insideUnitCircle * SpawnRadius;
         nextShapeObj.transform.position = new Vector3(icr.x, icr.y, 30);
-        //todo:roatation along its own centre
         nextShapeObj.transform.rotation = Random.rotation;
         nextShapeObj.transform.localScale = Random.insideUnitSphere * (MaxSize - MinSize) + new Vector3(1, 1, 1) * MinSize;
         enemies.Add(new Enemy() { em = nextShapeObj, rot = Random.rotation });
         // Debug.Log("spawned an enemy, list has objs: " + enemies.Count);
     }
     private double scoreDifference = 0;
-
 }
 
 struct Enemy

@@ -72,7 +72,7 @@ public class Master : MonoBehaviour
         didCrashBuffer.Dispose();
         foreach (float crash in didCrashArr)
         {
-            Debug.Log(crash);
+            // Debug.Log(crash);
             if (crash > 1)
             {
                return true;
