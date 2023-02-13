@@ -1,3 +1,8 @@
+mod camera;
+mod texture;
+
+use std::time::Duration;
+
 use wgpu::{util::DeviceExt, Texture};
 use winit::{
     event::*,
@@ -6,8 +11,6 @@ use winit::{
 };
 
 use winit::window::Window;
-
-mod texture;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -78,6 +81,13 @@ struct State {
     num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
     diffuse_texture: texture::Texture,
+    camera: camera::Camera,
+    projection: camera::Projection,
+    camera_controller: camera::CameraController,
+    camera_uniform: camera::CameraUniform,
+    camera_buffer: wgpu::Buffer,
+    camera_bind_group: wgpu::BindGroup,
+    mouse_pressed: bool,
 }
 
 impl State {
@@ -174,11 +184,47 @@ impl State {
             label: Some("diffuse_bind_group"),
         });
 
+        let camera = camera::Camera::new((0.0, 5.0, 10.0), cgmath::Deg(-90.0), cgmath::Deg(-20.0));
+        let projection =
+            camera::Projection::new(config.width, config.height, cgmath::Deg(45.0), 0.1, 100.0);
+        let camera_controller = camera::CameraController::new(4.0, 0.4);
+
+        let mut camera_uniform = camera::CameraUniform::new();
+        camera_uniform.update_view_proj(&camera, &projection);
+
+        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let camera_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("camera_bind_group_layout"),
+            });
+        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &camera_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }],
+            label: Some("camera_bind_group"),
+        });
+
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader1.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&texture_bind_group_layout],
+                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -248,6 +294,13 @@ impl State {
             num_indices,
             diffuse_bind_group,
             diffuse_texture,
+            camera,
+            projection,
+            camera_controller,
+            mouse_pressed: false,
+            camera_uniform,
+            camera_buffer,
+            camera_bind_group,
         }
     }
 
@@ -256,6 +309,7 @@ impl State {
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        self.projection.resize(new_size.width, new_size.height);
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
@@ -266,21 +320,35 @@ impl State {
 
     fn input(&mut self, event: &WindowEvent) -> bool {
         match event {
-            WindowEvent::CursorMoved { position, .. } => {
-                self.clear_color = wgpu::Color {
-                    r: position.x as f64 / self.size.width as f64,
-                    g: position.y as f64 / self.size.height as f64,
-                    b: 0.5,
-                    a: 0.5,
-                };
+            WindowEvent::KeyboardInput {
+                input:
+                    KeyboardInput {
+                        virtual_keycode: Some(key),
+                        state,
+                        ..
+                    },
+                ..
+            } => self.camera_controller.process_keyboard(*key, *state),
+            WindowEvent::MouseWheel { delta, .. } => {
+                self.camera_controller.process_scroll(delta);
+                true
+            }
+            WindowEvent::MouseInput {
+                button: MouseButton::Left,
+                state,
+                ..
+            } => {
+                self.mouse_pressed = *state == ElementState::Pressed;
                 true
             }
             _ => false,
         }
     }
 
-    fn update(&mut self) {
-        // todo!()
+    fn update(&mut self, dt: Duration) {
+        self.camera_controller.update_camera(&mut self.camera, dt);
+        self.camera_uniform.update_view_proj(&self.camera,&self.projection);
+        self.queue.write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[self.camera_uniform]));
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -308,6 +376,7 @@ impl State {
             });
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1); // 2.
@@ -327,10 +396,14 @@ pub async fn run() {
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
     let mut state = State::new(window).await;
+    let mut last_render_time = std::time::Instant::now();
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-            state.update();
+            let now = std::time::Instant::now();
+            let dt = now - last_render_time;
+            last_render_time = now;
+            state.update(dt);
             match state.render() {
                 Ok(_) => {}
                 // Reconfigure the surface if lost
@@ -346,12 +419,19 @@ pub async fn run() {
             // request it.
             state.window().request_redraw();
         }
+        Event::DeviceEvent {
+            event: DeviceEvent::MouseMotion{ delta, },
+            .. // We're not using device_id currently
+        } => if state.mouse_pressed {
+            state.camera_controller.process_mouse(delta.0, delta.1)
+        }
         Event::WindowEvent {
             ref event,
             window_id,
         } if window_id == state.window().id() => {
             if !state.input(event) {
                 match event {
+                    #[cfg(not(target_arch="wasm32"))]
                     WindowEvent::CloseRequested
                     | WindowEvent::KeyboardInput {
                         input:
