@@ -1,8 +1,11 @@
 use cgmath::*;
+use wgpu::{Device, Queue};
+use wgpu::util::DeviceExt;
 use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
 use winit::dpi::PhysicalPosition;
 use winit::event::*;
+use nalgebra;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
@@ -203,6 +206,7 @@ pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
+    inverse_view_proj: [[f32; 4]; 4],
     view_position: [f32; 4],
 }
 
@@ -211,11 +215,84 @@ impl CameraUniform {
         Self {
             view_position: [0.0; 4],
             view_proj: cgmath::Matrix4::identity().into(),
+            inverse_view_proj: cgmath::Matrix4::identity().into(),
         }
     }
 
     pub fn update_view_proj(&mut self, camera: &Camera, projection: &Projection) {
         self.view_position = camera.position.to_homogeneous().into();
-        self.view_proj = (projection.calc_matrix() * camera.calc_matrix()).into()
+        self.view_proj = (projection.calc_matrix() * camera.calc_matrix()).into();
+        self.inverse_view_proj = nalgebra::Matrix4::from(self.view_proj).try_inverse().unwrap().into();
+    }
+}
+
+pub struct RenderCamera {
+    pub camera: Camera,
+    pub projection: Projection,
+    pub controller: CameraController,
+    pub uniform: CameraUniform,
+    pub buffer: wgpu::Buffer,
+    pub bind_group: wgpu::BindGroup,
+    pub bind_group_layout: wgpu::BindGroupLayout,
+}
+
+impl RenderCamera {
+    pub fn new(device : &Device, width: u32, height: u32)->Self{
+
+        let camera = Camera::new((0.0, 5.0, 10.0), cgmath::Deg(-90.0), cgmath::Deg(-20.0));
+        let projection =
+            Projection::new(width, height, cgmath::Deg(45.0), 0.1, 100.0);
+        let controller = CameraController::new(4.0, 0.4);
+
+        let mut uniform = CameraUniform::new();
+        uniform.update_view_proj(&camera, &projection);
+
+        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("camera_bind_group_layout"),
+            });
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: buffer.as_entire_binding(),
+            }],
+            label: Some("camera_bind_group"),
+        });
+        Self{
+            camera,
+            projection,
+            controller,
+            uniform,
+            buffer,
+            bind_group,
+            bind_group_layout,
+        }
+    }
+    fn update_conroller(&mut self, dt: Duration) {
+        self.controller.update_camera(&mut self.camera, dt);
+    }
+    fn update_uniform(&mut self, queue: &Queue) {
+        self.uniform.update_view_proj(&self.camera, &self.projection);
+        queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.uniform]));
+    }
+    pub fn update(&mut self, dt: Duration, queue: &Queue) {
+        self.update_conroller(dt);
+        self.update_uniform(queue);
     }
 }
