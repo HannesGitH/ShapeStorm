@@ -58,11 +58,15 @@ fn fs_main(
     // @builtin(position) @invariant position: vec4<f32>,
     in: VertexOutput
     ) -> @location(0) vec4<f32> {
-        // return vec4<f32>(normalize(in.clip_position.xyz), 1.0);
+        // return vec4<f32>(normalize(in.clip_position.xyz/1000.0), 1.0);
     // return textureSample(t_diffuse, s_diffuse, in.tex_coords);
     // return vec4<f32>(in.color, 1.0);
     // return vec4<f32>(100.0,1.0,0.9, 1.0);
-    return vec4<f32>(march(mk_ray_from_camera(in.clip_position.xy)).color.xyz, 1.0);
+    let ray = mk_ray_from_camera(in.clip_position.xy);
+    // return vec4<f32>(ray.direction,1.0);
+    let out = march(ray);
+    // return vec4<f32>(f32(out.steps)/32.0, vec3<f32>(1.0));
+    return vec4<f32>(out.color.xyz, 1.0);
 }
 
 // ray marching
@@ -73,18 +77,28 @@ struct MarchOutput {
     steps: u32,
 }
 
+const max_steps = 128u;
+const max_distance = 100.0;
+const epsilon = 0.001;
+    
 fn march(ray: Ray) -> MarchOutput {
-    var dst = 100000.0;
+    var dst = 0.0;
     var steps = 0u;
+    let max_steps_f32 = f32(max_steps);
     var color = vec4<f32>(.0);
-    for (var i = 0u; i < 32u; i = i + 1u) {
+    for (var i = 0u; i < max_steps; i = i + 1u) {
         let out = calc_step(ray.origin + ray.direction * dst);
         dst = dst + out.distance;
-        color = color + out.color/32.0;
-        if (dst < 0.001) {
+        color = color + out.color/max_steps_f32;
+        if (dst < epsilon) {
             steps = i;
             break;
         }
+        // if (dst > max_distance) {
+        //     steps = i;
+        //     color = vec4<f32>(0.0);
+        //     break;
+        // }
     }
     return MarchOutput(dst, color, steps);
 }
@@ -127,7 +141,7 @@ fn calc_step(from_point: vec3<f32>) -> StepOutput {
     //     }
     // }
     min_dst = distance_to_primitive(from_point, primitives.prims[0]);
-    return StepOutput(min_dst, min_dst * primitives.prims[0].rgba);
+    return StepOutput(min_dst, primitives.prims[0].rgba / min_dst);
 }
 
 fn quaternions_rotate(q: vec4<f32>, v: vec3<f32>) -> vec3<f32>{

@@ -2,18 +2,23 @@ use std::time::Duration;
 
 use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Device, Buffer};
 
+// #[repr(C , align(16))]
+// the paddings allow aliognment of 16bytes for my actual variables
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
 pub struct SDFPrimitive {
     position: [f32; 3],
+    _pad1: f32,
     rotation: [f32; 4],
     data: [f32; 4],
     instances: [u32; 3],
+    _pad2: f32,
     rgba: [f32; 4],
     typus: u32,
+    _pad3: [f32; 3],
     // operation: u32,
     // blend_strength: f32,
-    filler: [u32; 5], // 32 byte alignment
+    // filler: [u32; 5], // 32 byte alignment
 }
 // struct Primitive {
 //     position: vec3<f32>,
@@ -35,7 +40,7 @@ impl SDFPrimitive {
             rotation: [0.0; 4],
             data: [0.0; 4],
             instances: [1; 3],
-            filler: [0; 5],
+            ..Default::default()
         }
     }
 }
