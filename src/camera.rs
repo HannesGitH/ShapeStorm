@@ -230,7 +230,7 @@ pub struct CameraUniform {
 impl CameraUniform {
     pub fn new() -> Self {
         Self {
-            view_position: [0.0; 4],
+            view_position: [1.0; 4],
             world_to_screen: cgmath::Matrix4::identity().into(),
             screen_to_world: cgmath::Matrix4::identity().into(),
         }
@@ -261,7 +261,7 @@ pub struct RenderCamera {
 impl RenderCamera {
     pub fn new(device : &Device, width: u32, height: u32)->Self{
 
-        let camera = Camera::new((0.0, 5.0, 10.0), cgmath::Deg(-90.0), cgmath::Deg(-20.0));
+        let camera = Camera::new((0.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
         let projection =
             Projection::new(width, height, cgmath::Deg(45.0), 0.1, 100.0);
         let controller = CameraController::new(4.0, 0.4);

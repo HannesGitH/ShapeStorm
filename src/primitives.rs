@@ -77,6 +77,7 @@ impl PrimitiveManager {
                 primitive.data[1] += 0.1*dt.as_secs_f32();
                 primitive.data[2] += 0.1*dt.as_secs_f32();
                 primitive.data[3] = 0.2*dt.as_secs_f32();
+                primitive.rotation[0] += 0.02*dt.as_secs_f32();
                 primitive.rgba[0] -= 0.01*dt.as_secs_f32();
             }
         };
