@@ -5,7 +5,6 @@ use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
 use winit::dpi::PhysicalPosition;
 use winit::event::*;
-use nalgebra;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
@@ -47,6 +46,17 @@ impl Camera {
             Vector3::unit_y(),
         )
     }
+    pub fn calc_inverse_matrix(&self) -> Matrix4<f32> {
+        // self.calc_matrix().invert().unwrap()
+        let (sin_pitch, cos_pitch) = self.pitch.opposite().0.sin_cos();
+        let (sin_yaw, cos_yaw) = self.yaw.opposite().0.sin_cos();
+
+        Matrix4::look_to_rh(
+            self.position * -1.0,
+            Vector3::new(cos_pitch * cos_yaw, sin_pitch, cos_pitch * sin_yaw).normalize(),
+            Vector3::unit_y(),
+        )
+    }
 }
 
 pub struct Projection {
@@ -71,7 +81,8 @@ impl Projection {
     }
 
     pub fn calc_matrix(&self) -> Matrix4<f32> {
-        OPENGL_TO_WGPU_MATRIX * perspective(self.fovy, self.aspect, self.znear, self.zfar)
+        // OPENGL_TO_WGPU_MATRIX * 
+        perspective(self.fovy, self.aspect, self.znear, self.zfar)
     }
 }
 
@@ -205,24 +216,27 @@ impl CameraController {
 pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
-    view_proj: [[f32; 4]; 4],
-    inverse_view_proj: [[f32; 4]; 4],
     view_position: [f32; 4],
+    world_to_screen: [[f32; 4]; 4],
+    screen_to_world: [[f32; 4]; 4],
 }
 
 impl CameraUniform {
     pub fn new() -> Self {
         Self {
             view_position: [0.0; 4],
-            view_proj: cgmath::Matrix4::identity().into(),
-            inverse_view_proj: cgmath::Matrix4::identity().into(),
+            world_to_screen: cgmath::Matrix4::identity().into(),
+            screen_to_world: cgmath::Matrix4::identity().into(),
         }
     }
 
     pub fn update_view_proj(&mut self, camera: &Camera, projection: &Projection) {
         self.view_position = camera.position.to_homogeneous().into();
-        self.view_proj = (projection.calc_matrix() * camera.calc_matrix()).into();
-        self.inverse_view_proj = nalgebra::Matrix4::from(self.view_proj).try_inverse().unwrap().into();
+        let proj = projection.calc_matrix();
+        let world_to_cam = camera.calc_matrix();
+        self.world_to_screen = (proj * world_to_cam).into();
+        self.screen_to_world = //(camera.calc_inverse_matrix() * proj.invert().unwrap()).into();
+            (proj.invert().unwrap() * world_to_cam.invert().unwrap()).into();
     }
 }
 

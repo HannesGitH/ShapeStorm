@@ -18,8 +18,12 @@ struct Primitives {
 var<storage, read> primitives: Primitives;
 
 struct CameraUniform {
-    view_proj: mat4x4<f32>,
-    inverse_view_proj: mat4x4<f32>,
+    view_position: vec4<f32>,
+    // view_proj: mat4x4<f32>,
+    // inverse_proj: mat4x4<f32>,
+    // cam_to_world: mat4x4<f32>,
+    world_to_screen: mat4x4<f32>,
+    screen_to_world: mat4x4<f32>,
 };
 @group(1) @binding(0) // 1.
 var<uniform> camera: CameraUniform;
@@ -77,7 +81,7 @@ struct MarchOutput {
     steps: u32,
 }
 
-const max_steps = 128u;
+const max_steps = 32u;
 const max_distance = 100.0;
 const epsilon = 0.001;
     
@@ -92,6 +96,7 @@ fn march(ray: Ray) -> MarchOutput {
         color = color + out.color/max_steps_f32;
         if (dst < epsilon) {
             steps = i;
+            color = out.color;
             break;
         }
         // if (dst > max_distance) {
@@ -109,16 +114,21 @@ struct Ray {
 }
 
 fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
-    let origin = camera.view_proj[3].xyz;
-    var direction = (camera.inverse_view_proj * vec4<f32>(uv,.0,1.0)).xyz;
-    direction = (camera.view_proj * vec4<f32>(direction,.0)).xyz;
-    direction = normalize(direction);
+    let origin = camera.view_position.xyz;
+    // let origin = camera.view_proj[3].xyz;
+    // let origin =  (camera.view_proj * vec4<f32>(0.0,0.0,0.0,1.0)).xyz;
+    // var direction = (camera.inverse_proj * vec4<f32>(uv,.0,1.0)).xyz;
+    // direction = (camera.cam_to_world * vec4<f32>(direction,.0)).xyz;
+    var direction = (camera.screen_to_world * vec4<f32>(uv,.0,1.0)).xyz; //TODO: hier geht etwas schief, wenn man sich dreht, bewegeung geht
+    // var direction =vec3<f32>(uv,.5);
+    direction = normalize(direction-origin);
     return Ray(origin, direction);
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
-    let relative_point = from_point - primitive.position;
-    dst = distance_to_box_frame(relative_point, primitive.data.xyz, primitive.data.w);
+    let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); //TO-DO: hier geht etwas schief
+    // let relative_point = from_point - primitive.position;
+    dst = distance_to_box_frame(relative_point, primitive.data);
     // switch(primitive.typus) {
     //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data.xyz, primitive.data.w);}
     //     default: {}
@@ -150,12 +160,46 @@ fn quaternions_rotate(q: vec4<f32>, v: vec3<f32>) -> vec3<f32>{
 
 // primitive signed distance functions
 
-fn distance_to_box_frame(from_point : vec3<f32>, box_size : vec3<f32>, frame_girth: f32)->f32
+fn distance_to_box_frame(from_point : vec3<f32>, box_data : vec4<f32>)->f32
 {
+    let box_size:vec3<f32> = box_data.xyz;
+    let frame_girth: f32 = box_data.w;
     let p:vec3<f32> = abs(from_point)-box_size;
     let q:vec3<f32> = abs(p+frame_girth)-frame_girth;
     return min(min(
         length(max(vec3(p.x,q.y,q.z),vec3(.0)))+min(max(p.x,max(q.y,q.z)),0.0),
         length(max(vec3(q.x,p.y,q.z),vec3(.0)))+min(max(q.x,max(p.y,q.z)),0.0)),
         length(max(vec3(q.x,q.y,p.z),vec3(.0)))+min(max(q.x,max(q.y,p.z)),0.0));
+}
+
+fn qconj(q: vec4<f32>) -> vec4<f32> {
+    return q * vec4<f32>(-1.0, -1.0, -1.0, 1.0);
+}
+
+fn qinverse(q: vec4<f32>) -> vec4<f32> {
+    return qconj(q) / dot(q, q);
+}
+
+// quaternions
+fn qmul(q1: vec4<f32>,  q2:vec4<f32>)->vec4<f32>
+{
+    return vec4<f32>(
+        q2.xyz * q1.w + q1.xyz * q2.w + cross(q1.xyz, q2.xyz),
+        q1.w * q2.w - dot(q1.xyz, q2.xyz)
+    );
+}
+
+// fn qrotate_vector(q: vec4<f32>, v: vec3<f32>) -> vec3<f32> {
+//     return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+// }
+
+fn qrotate_vector( r:vec4<f32>, v:vec3<f32>)->vec3<f32>
+{
+    return qmul(r, qmul(vec4<f32>(v, .0), qconj(r))).xyz;
+}
+
+fn fast_inverse_qrotate_vector( r:vec4<f32>, v:vec3<f32>)->vec3<f32>
+{
+   let rr = r / dot(r, r);
+    return qmul(r, qmul(vec4<f32>(v, .0), rr)).xyz;
 }
