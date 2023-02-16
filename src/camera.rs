@@ -60,7 +60,7 @@ impl Camera {
 }
 
 pub struct Projection {
-    aspect: f32,
+    pixels : (u32, u32),
     fovy: Rad<f32>,
     znear: f32,
     zfar: f32,
@@ -69,7 +69,7 @@ pub struct Projection {
 impl Projection {
     pub fn new<F: Into<Rad<f32>>>(width: u32, height: u32, fovy: F, znear: f32, zfar: f32) -> Self {
         Self {
-            aspect: width as f32 / height as f32,
+            pixels: (width, height),
             fovy: fovy.into(),
             znear,
             zfar,
@@ -77,13 +77,19 @@ impl Projection {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        self.aspect = width as f32 / height as f32;
+        self.pixels = (width, height);
     }
 
     pub fn calc_matrix(&self) -> Matrix4<f32> {
+        let aspect = self.pixels.0 as f32 / self.pixels.1 as f32;
         // OPENGL_TO_WGPU_MATRIX * 
-        perspective(self.fovy, self.aspect, self.znear, self.zfar)
+        perspective(self.fovy, aspect, self.znear, self.zfar)
     }
+
+    pub fn get_uv_to_screen_matrix(&self) -> Matrix4<f32> {
+        Matrix4::from_nonuniform_scale(1.0/(self.pixels.0 as f32), 1.0/(self.pixels.1 as f32), 1.0)
+    }
+
 }
 
 #[derive(Debug)]
@@ -236,7 +242,9 @@ impl CameraUniform {
         let world_to_cam = camera.calc_matrix();
         self.world_to_screen = (proj * world_to_cam).into();
         self.screen_to_world = //(camera.calc_inverse_matrix() * proj.invert().unwrap()).into();
-            (proj.invert().unwrap() * world_to_cam.invert().unwrap()).into();
+            (camera.calc_inverse_matrix() * proj.invert().unwrap() 
+            // * projection.get_uv_to_screen_matrix()
+        ).into();
     }
 }
 
@@ -308,5 +316,8 @@ impl RenderCamera {
     pub fn update(&mut self, dt: Duration, queue: &Queue) {
         self.update_conroller(dt);
         self.update_uniform(queue);
+    }
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.projection.resize(width, height);
     }
 }

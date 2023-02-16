@@ -72,7 +72,7 @@ impl PrimitiveManager {
     pub fn update(&mut self, dt: Duration, queue: &wgpu::Queue) {
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
-                primitive.position[0] += 0.1*dt.as_secs_f32();
+                // primitive.position[0] += 0.1*dt.as_secs_f32();
                 primitive.data[0] += 0.1*dt.as_secs_f32();
                 primitive.data[1] += 0.1*dt.as_secs_f32();
                 primitive.data[2] += 0.1*dt.as_secs_f32();

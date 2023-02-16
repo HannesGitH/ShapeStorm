@@ -121,7 +121,7 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
     // direction = (camera.cam_to_world * vec4<f32>(direction,.0)).xyz;
     var direction = (camera.screen_to_world * vec4<f32>(uv,.0,1.0)).xyz; //TODO: hier geht etwas schief, wenn man sich dreht, bewegeung geht
     // var direction =vec3<f32>(uv,.5);
-    direction = normalize(direction-origin);
+    direction = normalize(direction);
     return Ray(origin, direction);
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
