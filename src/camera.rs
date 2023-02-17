@@ -86,8 +86,8 @@ impl Projection {
         perspective(self.fovy, aspect, self.znear, self.zfar)
     }
 
-    pub fn get_uv_to_screen_matrix(&self) -> Matrix4<f32> {
-        Matrix4::from_nonuniform_scale(1.0/(self.pixels.0 as f32), 1.0/(self.pixels.1 as f32), 1.0)
+    pub fn get_pixel_normalization_matrix(&self) -> Matrix4<f32> {
+        Matrix4::from_translation(Vector3::new(-0.5, 0.5, 0.0)) * Matrix4::from_nonuniform_scale(1.0/(self.pixels.0 as f32), -1.0/(self.pixels.1 as f32), 1.0) //* Matrix4::from_translation(Vector3::new(-0.5*(self.pixels.0 as f32), 0.5, 0.0))
     }
 
 }
@@ -225,6 +225,7 @@ pub struct CameraUniform {
     view_position: [f32; 4],
     world_to_screen: [[f32; 4]; 4],
     screen_to_world: [[f32; 4]; 4],
+    pixel_normalization_matrix : [[f32; 4]; 4],
 }
 
 impl CameraUniform {
@@ -233,6 +234,7 @@ impl CameraUniform {
             view_position: [1.0; 4],
             world_to_screen: cgmath::Matrix4::identity().into(),
             screen_to_world: cgmath::Matrix4::identity().into(),
+            pixel_normalization_matrix: cgmath::Matrix4::identity().into(),
         }
     }
 
@@ -242,9 +244,14 @@ impl CameraUniform {
         let world_to_cam = camera.calc_matrix();
         self.world_to_screen = (proj * world_to_cam).into();
         self.screen_to_world = //(camera.calc_inverse_matrix() * proj.invert().unwrap()).into();
-            (camera.calc_inverse_matrix() * proj.invert().unwrap() 
+            (
+                // camera.calc_inverse_matrix() * 
+                world_to_cam.invert().unwrap() 
+                * 
+                proj.invert().unwrap() 
             // * projection.get_uv_to_screen_matrix()
         ).into();
+        self.pixel_normalization_matrix = projection.get_pixel_normalization_matrix().into();
     }
 }
 
@@ -261,9 +268,9 @@ pub struct RenderCamera {
 impl RenderCamera {
     pub fn new(device : &Device, width: u32, height: u32)->Self{
 
-        let camera = Camera::new((0.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
+        let camera = Camera::new((-30.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
         let projection =
-            Projection::new(width, height, cgmath::Deg(45.0), 0.1, 100.0);
+            Projection::new(width, height, cgmath::Deg(55.0), 0.1, 100.0);
         let controller = CameraController::new(4.0, 0.4);
 
         let mut uniform = CameraUniform::new();

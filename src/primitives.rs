@@ -36,9 +36,9 @@ impl SDFPrimitive {
         Self {
             rgba: [1.0; 4],
             typus: 0,
-            position: [0.5; 3],
+            position: [0.0; 3],
             rotation: [0.0, 0.0, 0.0, 1.0],
-            data: [0.0; 4],
+            data: [0.1; 4],
             instances: [1; 3],
             ..Default::default()
         }
@@ -72,12 +72,12 @@ impl PrimitiveManager {
     pub fn update(&mut self, dt: Duration, queue: &wgpu::Queue) {
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
-                // primitive.position[0] += 0.1*dt.as_secs_f32();
-                primitive.data[0] += 0.1*dt.as_secs_f32();
-                primitive.data[1] += 0.1*dt.as_secs_f32();
-                primitive.data[2] += 0.1*dt.as_secs_f32();
-                primitive.data[3] = 0.2*dt.as_secs_f32();
-                primitive.rotation[0] += 0.02*dt.as_secs_f32();
+                // primitive.position[0] += 0.01*dt.as_secs_f32();
+                primitive.data[0] += 0.002*dt.as_secs_f32();
+                primitive.data[1] += 0.001*dt.as_secs_f32();
+                primitive.data[2] += 0.001*dt.as_secs_f32();
+                primitive.data[3] = 0.002;//*dt.as_secs_f32();
+                // primitive.rotation[0] += 0.02*dt.as_secs_f32();
                 primitive.rgba[0] -= 0.01*dt.as_secs_f32();
             }
         };

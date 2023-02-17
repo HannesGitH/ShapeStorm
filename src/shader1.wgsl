@@ -24,6 +24,7 @@ struct CameraUniform {
     // cam_to_world: mat4x4<f32>,
     world_to_screen: mat4x4<f32>,
     screen_to_world: mat4x4<f32>,
+    pixel_normalization: mat4x4<f32>,
 };
 @group(1) @binding(0) // 1.
 var<uniform> camera: CameraUniform;
@@ -46,7 +47,7 @@ fn vs_main(
     var out: VertexOutput;
     // out.tex_coords = model.tex_coords;
     out.clip_position = 
-    // camera.view_proj * 
+    // camera.world_to_screen * 
     vec4<f32>(model.position, 1.0);
     return out;
 }
@@ -66,11 +67,11 @@ fn fs_main(
     // return textureSample(t_diffuse, s_diffuse, in.tex_coords);
     // return vec4<f32>(in.color, 1.0);
     // return vec4<f32>(100.0,1.0,0.9, 1.0);
-    let ray = mk_ray_from_camera(in.clip_position.xy);
+    let ray = mk_ray_from_camera((camera.pixel_normalization * in.clip_position).xy/*-vec2<f32>(500.0,500.0)*/);
     // return vec4<f32>(ray.direction,1.0);
     let out = march(ray);
-    // return vec4<f32>(f32(out.steps)/32.0, vec3<f32>(1.0));
-    return vec4<f32>(out.color.xyz, 1.0);
+    // // return vec4<f32>(f32(out.steps)/32.0, vec3<f32>(1.0));
+    return vec4<f32>(out.color.xyz , 1.0);
 }
 
 // ray marching
@@ -83,7 +84,7 @@ struct MarchOutput {
 
 const max_steps = 32u;
 const max_distance = 100.0;
-const epsilon = 0.001;
+const epsilon = 0.0001;
     
 fn march(ray: Ray) -> MarchOutput {
     var dst = 0.0;
@@ -93,10 +94,11 @@ fn march(ray: Ray) -> MarchOutput {
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let out = calc_step(ray.origin + ray.direction * dst);
         dst = dst + out.distance;
-        color = color + out.color/max_steps_f32;
-        if (dst < epsilon) {
+        color = color + out.color/max_steps_f32/max_steps_f32;
+        if (out.distance < epsilon) {
             steps = i;
-            color = out.color;
+            // color = out.color;
+            color = vec4<f32>(0.0);
             break;
         }
         // if (dst > max_distance) {
@@ -119,9 +121,9 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
     // let origin =  (camera.view_proj * vec4<f32>(0.0,0.0,0.0,1.0)).xyz;
     // var direction = (camera.inverse_proj * vec4<f32>(uv,.0,1.0)).xyz;
     // direction = (camera.cam_to_world * vec4<f32>(direction,.0)).xyz;
-    var direction = (camera.screen_to_world * vec4<f32>(uv,.0,1.0)).xyz; //TODO: hier geht etwas schief, wenn man sich dreht, bewegeung geht
+    var direction = (camera.screen_to_world * vec4<f32>(uv,1.0,1.0)).xyz; //TODO: hier geht etwas schief, wenn man sich dreht, bewegeung geht
     // var direction =vec3<f32>(uv,.5);
-    direction = normalize(direction);
+    direction = normalize(direction-origin);
     return Ray(origin, direction);
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
@@ -170,6 +172,11 @@ fn distance_to_box_frame(from_point : vec3<f32>, box_data : vec4<f32>)->f32
         length(max(vec3(p.x,q.y,q.z),vec3(.0)))+min(max(p.x,max(q.y,q.z)),0.0),
         length(max(vec3(q.x,p.y,q.z),vec3(.0)))+min(max(q.x,max(p.y,q.z)),0.0)),
         length(max(vec3(q.x,q.y,p.z),vec3(.0)))+min(max(q.x,max(q.y,p.z)),0.0));
+}
+
+fn distance_to_sphere(from_point: vec3<f32>, sphere_data: vec4<f32>) -> f32 {
+    let sphere_radius = sphere_data.w;
+    return length(from_point) - sphere_radius;
 }
 
 fn qconj(q: vec4<f32>) -> vec4<f32> {
