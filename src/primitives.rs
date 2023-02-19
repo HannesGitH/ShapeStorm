@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use cgmath::Rotation3;
 use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Device, Buffer};
 
 // #[repr(C , align(16))]
@@ -38,7 +39,7 @@ impl SDFPrimitive {
             typus: 0,
             position: [0.0; 3],
             rotation: [0.0, 0.0, 0.0, 1.0],
-            data: [1.0; 4],
+            data: [10.0; 4],
             instances: [1; 3],
             ..Default::default()
         }
@@ -50,6 +51,7 @@ pub struct PrimitiveManager {
     pub buffer: Buffer,
     pub bind_group: BindGroup,
     pub bind_group_layout: BindGroupLayout,
+    total_time: Duration,
 }
 
 impl PrimitiveManager {
@@ -63,6 +65,7 @@ impl PrimitiveManager {
             buffer,
             bind_group,
             bind_group_layout,
+            total_time: Duration::from_secs(0),
         }
     }
     pub fn update_primitives<F>(&mut self, primitive_updater : F, queue: &wgpu::Queue) where F : Fn(& mut Vec<SDFPrimitive>) {
@@ -70,6 +73,8 @@ impl PrimitiveManager {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.primitives));
     }
     pub fn update(&mut self, dt: Duration, queue: &wgpu::Queue) {
+        self.total_time += dt;
+        let total_time = self.total_time;
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
                 // primitive.position[0] += 0.01*dt.as_secs_f32();
@@ -77,7 +82,7 @@ impl PrimitiveManager {
                 primitive.data[1] += 0.5*dt.as_secs_f32();
                 primitive.data[2] += 0.5*dt.as_secs_f32();
                 primitive.data[3] = 1.0;//*dt.as_secs_f32();
-                // primitive.rotation[0] += 0.02*dt.as_secs_f32();
+                primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
                 primitive.rgba[0] -= 0.01*dt.as_secs_f32();
             }
         };

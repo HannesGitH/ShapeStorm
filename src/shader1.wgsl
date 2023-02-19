@@ -118,19 +118,14 @@ struct Ray {
 
 fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
     let origin = camera.view_position.xyz;
-    // let origin = camera.view_proj[3].xyz;
-    // let origin =  (camera.view_proj * vec4<f32>(0.0,0.0,0.0,1.0)).xyz;
-    // var direction = (camera.inverse_proj * vec4<f32>(uv,.0,1.0)).xyz;
-    // direction = (camera.cam_to_world * vec4<f32>(direction,.0)).xyz;
     var direction = (camera.screen_to_world * vec4<f32>(uv,0.0,1.0)).xyz;
-    // var direction =vec3<f32>(uv,.5);
     direction = normalize(direction-origin);
     return Ray(origin, direction);
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
-    let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); //TO-DO: hier geht etwas schief
-    // let relative_point = from_point - primitive.position;
+    let relative_point = fast_inverse_qrotate_vector(primitive.rotation,from_point) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //TO-DO: hier geht etwas schief
+    // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); //TO-DO: hier geht etwas schief
     dst = distance_to_box_frame(relative_point, primitive.data);
     // switch(primitive.typus) {
     //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data.xyz, primitive.data.w);}
@@ -157,9 +152,6 @@ fn calc_step(from_point: vec3<f32>) -> StepOutput {
     return StepOutput(min_dst, primitives.prims[0].rgba / min_dst);
 }
 
-fn quaternions_rotate(q: vec4<f32>, v: vec3<f32>) -> vec3<f32>{
-	return v + 2.0*cross(q.xyz, cross(q.xyz,v) + q.w*v);
-}
 
 // primitive signed distance functions
 
@@ -180,13 +172,6 @@ fn distance_to_sphere(from_point: vec3<f32>, sphere_data: vec4<f32>) -> f32 {
     return length(from_point) - sphere_radius;
 }
 
-fn qconj(q: vec4<f32>) -> vec4<f32> {
-    return q * vec4<f32>(-1.0, -1.0, -1.0, 1.0);
-}
-
-fn qinverse(q: vec4<f32>) -> vec4<f32> {
-    return qconj(q) / dot(q, q);
-}
 
 // quaternions
 fn qmul(q1: vec4<f32>,  q2:vec4<f32>)->vec4<f32>
@@ -201,6 +186,14 @@ fn qmul(q1: vec4<f32>,  q2:vec4<f32>)->vec4<f32>
 //     return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
 // }
 
+fn qconj(q: vec4<f32>) -> vec4<f32> {
+    return q * vec4<f32>(-1.0, -1.0, -1.0, 1.0);
+}
+
+fn qinverse(q: vec4<f32>) -> vec4<f32> {
+    return qconj(q) / dot(q, q);
+}
+
 fn qrotate_vector( r:vec4<f32>, v:vec3<f32>)->vec3<f32>
 {
     return qmul(r, qmul(vec4<f32>(v, .0), qconj(r))).xyz;
@@ -208,6 +201,7 @@ fn qrotate_vector( r:vec4<f32>, v:vec3<f32>)->vec3<f32>
 
 fn fast_inverse_qrotate_vector( r:vec4<f32>, v:vec3<f32>)->vec3<f32>
 {
-   let rr = r / dot(r, r);
-    return qmul(r, qmul(vec4<f32>(v, .0), rr)).xyz;
+    let rr = r / dot(r, r);
+    let rhs = vec4<f32>(v * rr.w + cross(v, rr.xyz), - dot(v, rr.xyz));
+    return rhs.xyz * r.w - r.xyz * rhs.w - cross(r.xyz, rhs.xyz);
 }
