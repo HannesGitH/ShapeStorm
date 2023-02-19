@@ -13,10 +13,12 @@ pub struct SDFPrimitive {
     rotation: [f32; 4],
     data: [f32; 4],
     instances: [u32; 3],
-    _pad2: f32,
+    // _pad2: f32,
+    instances_distance: f32,
+    // _pad3: [f32; 3],
     rgba: [f32; 4],
     typus: u32,
-    _pad3: [f32; 3],
+    _pad4: [f32; 3],
     // operation: u32,
     // blend_strength: f32,
     // filler: [u32; 5], // 32 byte alignment
@@ -40,7 +42,8 @@ impl SDFPrimitive {
             position: [0.0; 3],
             rotation: [0.0, 0.0, 0.0, 1.0],
             data: [10.0; 4],
-            instances: [1; 3],
+            instances: [2; 3],
+            instances_distance: 50.0,
             ..Default::default()
         }
     }

@@ -4,6 +4,7 @@ struct Primitive {
     rotation: vec4<f32>,
     data: vec4<f32>,
     instances: vec3<u32>,
+    instances_distance: f32,
     rgba: vec4<f32>,
     typus: u32,
     // operation: u32,
@@ -126,9 +127,12 @@ fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
     let relative_point = fast_inverse_qrotate_vector(primitive.rotation,from_point) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //TO-DO: hier geht etwas schief
     // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); //TO-DO: hier geht etwas schief
-    dst = distance_to_box_frame(relative_point, primitive.data);
+    let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
+    let bound = vec3<f32>(primitive.instances);
+    let q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
+    dst = distance_to_box_frame(q, primitive.data);
     // switch(primitive.typus) {
-    //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data.xyz, primitive.data.w);}
+    //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data);}
     //     default: {}
     // }
     return dst;
