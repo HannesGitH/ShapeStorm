@@ -6,6 +6,9 @@
   - more points
   - more time
   - more lives
+- [ ] other special effects (warp, smooth, other rendering, etc..) to make the levels more interesting
+- [ ] collision detection (cpu side)
+  - maybe also normal estimation to make stuff bounce around?
 - [ ] make it run on android ...
 - [ ] vr?
 - [ ] ui
@@ -18,3 +21,4 @@
   - [ ] credits
   - [ ] upgrade shop?
   - [ ] level selection (random seed + hardness multiplier)
+- [ ] sound
