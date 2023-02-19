@@ -21,4 +21,5 @@
   - [ ] credits
   - [ ] upgrade shop?
   - [ ] level selection (random seed + hardness multiplier)
+    - [ ] permanent storage of score
 - [ ] sound

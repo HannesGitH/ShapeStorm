@@ -1,6 +1,7 @@
 mod camera;
 mod texture;
 mod primitives;
+mod level;
 
 use std::time::Duration;
 

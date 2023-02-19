@@ -87,6 +87,7 @@ impl PrimitiveManager {
                 primitive.data[3] = 1.0;//*dt.as_secs_f32();
                 primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
                 primitive.rgba[0] -= 0.01*dt.as_secs_f32();
+                primitive.instances_distance += 1.0*dt.as_secs_f32();
             }
         };
         self.update_primitives(updater, queue)
