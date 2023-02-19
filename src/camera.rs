@@ -82,7 +82,7 @@ impl Projection {
 
     pub fn calc_matrix(&self) -> Matrix4<f32> {
         let aspect = self.pixels.0 as f32 / self.pixels.1 as f32;
-        // OPENGL_TO_WGPU_MATRIX * 
+        OPENGL_TO_WGPU_MATRIX * 
         perspective(self.fovy, aspect, self.znear, self.zfar)
     }
 
@@ -268,10 +268,10 @@ pub struct RenderCamera {
 impl RenderCamera {
     pub fn new(device : &Device, width: u32, height: u32)->Self{
 
-        let camera = Camera::new((-30.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
+        let camera = Camera::new((-300.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
         let projection =
-            Projection::new(width, height, cgmath::Deg(55.0), 0.1, 100.0);
-        let controller = CameraController::new(4.0, 0.4);
+            Projection::new(width, height, cgmath::Deg(120.0), 1.0, 1000.0);
+        let controller = CameraController::new(50.0, 0.5);
 
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(&camera, &projection);

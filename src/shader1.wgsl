@@ -82,23 +82,24 @@ struct MarchOutput {
     steps: u32,
 }
 
-const max_steps = 32u;
-const max_distance = 100.0;
-const epsilon = 0.0001;
+const max_steps = 16u;
+const max_distance = 1000.0;
+const epsilon = 1.0;
     
 fn march(ray: Ray) -> MarchOutput {
     var dst = 0.0;
     var steps = 0u;
     let max_steps_f32 = f32(max_steps);
+    // let max_steps_f32_x3 = max_steps_f32;
     var color = vec4<f32>(.0);
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let out = calc_step(ray.origin + ray.direction * dst);
         dst = dst + out.distance;
-        color = color + out.color/max_steps_f32/max_steps_f32;
+        color = color + out.color;
         if (out.distance < epsilon) {
             steps = i;
             // color = out.color;
-            color = vec4<f32>(0.0);
+            color = vec4<f32>(1.0);
             break;
         }
         // if (dst > max_distance) {
@@ -121,7 +122,7 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
     // let origin =  (camera.view_proj * vec4<f32>(0.0,0.0,0.0,1.0)).xyz;
     // var direction = (camera.inverse_proj * vec4<f32>(uv,.0,1.0)).xyz;
     // direction = (camera.cam_to_world * vec4<f32>(direction,.0)).xyz;
-    var direction = (camera.screen_to_world * vec4<f32>(uv,1.0,1.0)).xyz; //TODO: hier geht etwas schief, wenn man sich dreht, bewegeung geht
+    var direction = (camera.screen_to_world * vec4<f32>(uv,0.0,1.0)).xyz;
     // var direction =vec3<f32>(uv,.5);
     direction = normalize(direction-origin);
     return Ray(origin, direction);
