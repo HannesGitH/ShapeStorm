@@ -39,9 +39,9 @@ impl SDFPrimitive {
             typus: 0,
             position: [0.0,0.0,1000.0],
             rotation: [0.0, 0.0, 0.0, 1.0],
-            data: [30.0; 4],
+            data: [20.0; 4],
             instances: [2; 3],
-            instances_distance: 50.0,
+            instances_distance: 70.0,
             _speed: 50.0,
             ..Default::default()
         }

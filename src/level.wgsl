@@ -133,11 +133,11 @@ fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     let mod_point = vec3<f32>((modf(q.xy/c+0.5*c,&whole)-vec2<f32>(0.5))*c,q.z); //to old spec
     let relative_point = fast_inverse_qrotate_vector(primitive.rotation,mod_point);// - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); 
     // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); 
-    // let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
-    // let bound = vec3<f32>(primitive.instances);
-    // let q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
-    // let relative_point_q = fast_inverse_qrotate_vector(primitive.rotation,q) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //we can rotate the multiple instances in itself
-    dst = distance_to_box_frame(relative_point, primitive.data);
+    let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
+    let bound = vec3<f32>(primitive.instances);
+    let mod_q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
+    let relative_point_q = fast_inverse_qrotate_vector(primitive.rotation,mod_q);// - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //we can rotate the multiple instances in itself
+    dst = distance_to_box_frame(relative_point_q, primitive.data);
     // switch(primitive.typus) {
     //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data);}
     //     default: {}
