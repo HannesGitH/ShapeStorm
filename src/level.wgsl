@@ -83,14 +83,14 @@ struct MarchOutput {
     steps: u32,
 }
 
-const max_steps = 16u;
-// const max_distance = 1000.0;
+const max_steps = 32u;
+const max_distance = 1000.0;
 const epsilon = 1.0;
     
 fn march(ray: Ray) -> MarchOutput {
     var dst = 0.0;
     var steps = 0u;
-    let max_steps_f32 = f32(max_steps);
+    let color_damper = f32(max_steps)/6.0;
     // let max_steps_f32_x3 = max_steps_f32;
     var color = vec4<f32>(.0);
     for (var i = 0u; i < max_steps; i = i + 1u) {
@@ -102,13 +102,14 @@ fn march(ray: Ray) -> MarchOutput {
             color = vec4<f32>(1.0);
             break;
         }
-        color = color + out.color;
+        color = color + out.color / color_damper;
         // if (dst > max_distance) {
         //     steps = i;
         //     color = vec4<f32>(0.0);
-        //     break;
+        //     break; d
         // }
     }
+    color = color;
     return MarchOutput(dst, color, steps);
 }
 
@@ -159,7 +160,7 @@ fn calc_step(from_point: vec3<f32>) -> StepOutput {
     //     }
     // }
     min_dst = distance_to_primitive(from_point, primitives.prims[0]);
-    return StepOutput(min_dst, primitives.prims[0].rgba / min_dst);
+    return StepOutput(min_dst, primitives.prims[0].rgba / max(/*sqrt*/min_dst/3.0,1.0));
 }
 
 

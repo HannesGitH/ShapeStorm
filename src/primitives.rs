@@ -39,7 +39,7 @@ impl SDFPrimitive {
             typus: 0,
             position: [0.0,0.0,1000.0],
             rotation: [0.0, 0.0, 0.0, 1.0],
-            data: [10.0; 4],
+            data: [30.0; 4],
             instances: [2; 3],
             instances_distance: 50.0,
             _speed: 50.0,
@@ -80,14 +80,14 @@ impl PrimitiveManager {
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
                 // primitive.position[0] += 0.01*dt.as_secs_f32();
-                primitive.data[0] += 0.5*dt.as_secs_f32();
-                primitive.data[1] += 0.5*dt.as_secs_f32();
-                primitive.data[2] += 0.5*dt.as_secs_f32();
+                // primitive.data[0] += 0.5*dt.as_secs_f32();
+                // primitive.data[1] += 0.5*dt.as_secs_f32();
+                // primitive.data[2] += 0.5*dt.as_secs_f32();
                 primitive.data[3] = 1.0;//*dt.as_secs_f32();
-                primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
-                primitive.rgba[0] -= 0.01*dt.as_secs_f32();
-                primitive.instances_distance += 1.0*dt.as_secs_f32();
-                primitive.position[1] -= primitive._speed*dt.as_secs_f32(); //eigtl [0], nur für test des renderns gerade 1
+                // primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
+                // primitive.rgba[0] -= 0.01*dt.as_secs_f32();
+                // primitive.instances_distance += 1.0*dt.as_secs_f32();
+                // primitive.position[1] -= primitive._speed*dt.as_secs_f32(); //eigtl [0], nur für test des renderns gerade 1
             }
         };
         self.update_primitives(updater, queue)
