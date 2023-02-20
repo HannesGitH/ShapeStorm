@@ -22,7 +22,7 @@ impl LevelManager {
         let rng = fastrand::Rng::with_seed(seed);
         let primitive_manager = primitives::PrimitiveManager::new(&device, 2);
         let camera = camera::RenderCamera::new(&device, size);
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader1.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("level.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
