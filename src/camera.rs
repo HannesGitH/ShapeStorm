@@ -215,7 +215,6 @@ pub struct CameraUniform {
     world_to_screen: [[f32; 4]; 4],
     screen_to_world: [[f32; 4]; 4],
     pixel_normalization_matrix : [[f32; 4]; 4],
-    pub mist_color: [f32; 4],
 }
 
 impl CameraUniform {
@@ -225,7 +224,6 @@ impl CameraUniform {
             world_to_screen: cgmath::Matrix4::identity().into(),
             screen_to_world: cgmath::Matrix4::identity().into(),
             pixel_normalization_matrix: cgmath::Matrix4::identity().into(),
-            mist_color: [0.9,0.2,0.2,1.0],
         }
     }
 

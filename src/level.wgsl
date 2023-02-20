@@ -26,7 +26,6 @@ struct CameraUniform {
     world_to_screen: mat4x4<f32>,
     screen_to_world: mat4x4<f32>,
     pixel_normalization: mat4x4<f32>,
-    mist_color : vec4<f32>,
 };
 @group(1) @binding(0) // 1.
 var<uniform> camera: CameraUniform;
@@ -91,7 +90,7 @@ const epsilon = 1.0;
 fn march(ray: Ray) -> MarchOutput {
     var dst = 0.0;
     var steps = 0u;
-    let color_damper = f32(max_steps);
+    let color_damper = f32(max_steps)/6.0;
     // let max_steps_f32_x3 = max_steps_f32;
     var color = vec4<f32>(.0);
     for (var i = 0u; i < max_steps; i = i + 1u) {
@@ -100,20 +99,17 @@ fn march(ray: Ray) -> MarchOutput {
         if (out.distance < epsilon) {
             steps = i;
             // color = out.color;
-            let _dst = min(dst, max_distance);
-            color = (vec4<f32>(1.0) * (max_distance-_dst) + camera.mist_color * _dst)/max_distance;
+            color = vec4<f32>(1.0);
             break;
         }
-        let _dst = clamp(dst, 1.0, max_distance);
-        color = color + (out.color * (max_distance-_dst) + camera.mist_color * _dst)/max_distance/color_damper;
+        color = color + out.color / color_damper;
         // if (dst > max_distance) {
         //     steps = i;
         //     color = vec4<f32>(0.0);
         //     break; d
         // }
     }
-    // let _dst = min(dst, max_distance);
-    // color = (color * (max_distance-_dst) + camera.mist_color * _dst)/max_distance;
+    color = color;
     return MarchOutput(dst, color, steps);
 }
 
