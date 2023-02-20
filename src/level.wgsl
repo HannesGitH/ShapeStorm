@@ -137,11 +137,12 @@ fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     let bound = vec3<f32>(primitive.instances);
     let mod_q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
     let relative_point_q = fast_inverse_qrotate_vector(primitive.rotation,mod_q);// - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //we can rotate the multiple instances in itself
-    dst = distance_to_box_frame(relative_point_q, primitive.data);
-    // switch(primitive.typus) {
-    //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data);}
-    //     default: {}
-    // }
+    // dst = distance_to_box_frame(relative_point_q, primitive.data);
+    switch(primitive.typus) {
+        case 0u: {dst = distance_to_box_frame(relative_point_q, primitive.data);}
+        case 1u: {dst = distance_to_sphere(relative_point_q, primitive.data);}
+        default: {}
+    }
     return dst;
 }
 

@@ -1,12 +1,49 @@
 use std::time::Duration;
 
 use cgmath::Rotation3;
-use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Device, Buffer};
+use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone)] //, bytemuck::Pod, bytemuck::Zeroable)]
+enum Typus {
+    BoxFrame,
+    Sphere,
+    // Cube,
+    // Torus,
+    // Cylinder,
+    // Cone,
+    // Capsule,
+    // Plane,
+    // Triangle,
+    // Pyramid,
+    // Icosahedron,
+    // Dodecahedron,
+    // Octahedron,
+    // Tetrahedron,
+    // Custom,
+}
+unsafe impl bytemuck::Contiguous for Typus {
+    type Int = u32;
+    const MIN_VALUE: u32 = Typus::BoxFrame as u32;
+    const MAX_VALUE: u32 = Typus::Sphere as u32;
+}
+unsafe impl bytemuck::Zeroable for Typus {
+    fn zeroed() -> Self {
+        unsafe { core::mem::zeroed() }
+    }
+}
+unsafe impl bytemuck::Pod for Typus {}
+
+impl Default for Typus {
+    fn default() -> Self {
+        Typus::BoxFrame
+    }
+}
 
 // #[repr(C , align(16))]
 // the paddings allow aliognment of 16bytes for my actual variables
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Default)]
+#[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SDFPrimitive {
     position: [f32; 3],
     _speed: f32,
@@ -15,7 +52,7 @@ pub struct SDFPrimitive {
     instances: [u32; 3],
     instances_distance: f32,
     rgba: [f32; 4],
-    typus: u32,
+    typus: Typus,
     _pad4: [f32; 3],
     // operation: u32,
     // blend_strength: f32,
@@ -36,13 +73,13 @@ impl SDFPrimitive {
     pub fn new() -> Self {
         Self {
             rgba: [1.0; 4],
-            typus: 0,
-            position: [0.0,0.0,1000.0],
+            position: [0.0, 0.0, 1000.0],
             rotation: [0.0, 0.0, 0.0, 1.0],
             data: [20.0; 4],
             instances: [2; 3],
             instances_distance: 70.0,
             _speed: 50.0,
+            // typus: Typus::Sphere,
             ..Default::default()
         }
     }
@@ -58,10 +95,11 @@ pub struct PrimitiveManager {
 
 impl PrimitiveManager {
     pub fn new(device: &Device, primitive_count: usize) -> Self {
-        let (bind_group, bind_group_layout, buffer) = mk_primitive_bind_group(device, primitive_count);
-        
-        let primitives = vec![SDFPrimitive::new();primitive_count];
-        
+        let (bind_group, bind_group_layout, buffer) =
+            mk_primitive_bind_group(device, primitive_count);
+
+        let primitives = vec![SDFPrimitive::new(); primitive_count];
+
         Self {
             primitives: primitives,
             buffer,
@@ -70,7 +108,10 @@ impl PrimitiveManager {
             total_time: Duration::from_secs(0),
         }
     }
-    pub fn update_primitives<F>(&mut self, primitive_updater : F, queue: &wgpu::Queue) where F : Fn(& mut Vec<SDFPrimitive>) {
+    pub fn update_primitives<F>(&mut self, primitive_updater: F, queue: &wgpu::Queue)
+    where
+        F: Fn(&mut Vec<SDFPrimitive>),
+    {
         primitive_updater(&mut self.primitives);
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.primitives));
     }
@@ -83,21 +124,24 @@ impl PrimitiveManager {
                 // primitive.data[0] += 0.5*dt.as_secs_f32();
                 // primitive.data[1] += 0.5*dt.as_secs_f32();
                 // primitive.data[2] += 0.5*dt.as_secs_f32();
-                primitive.data[3] = 1.0;//*dt.as_secs_f32();
-                // primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
-                // primitive.rgba[0] -= 0.01*dt.as_secs_f32();
-                // primitive.instances_distance += 1.0*dt.as_secs_f32();
-                // primitive.position[1] -= primitive._speed*dt.as_secs_f32(); //eigtl [0], nur für test des renderns gerade 1
+                primitive.data[3] = 1.0; //*dt.as_secs_f32();
+                                         // primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
+                                         // primitive.rgba[0] -= 0.01*dt.as_secs_f32();
+                                         // primitive.instances_distance += 1.0*dt.as_secs_f32();
+                                         // primitive.position[1] -= primitive._speed*dt.as_secs_f32(); //eigtl [0], nur für test des renderns gerade 1
             }
         };
         self.update_primitives(updater, queue)
     }
 }
 
-fn mk_primitive_bind_group(device: &Device, primitive_count: usize) -> (BindGroup, BindGroupLayout, Buffer) {
+fn mk_primitive_bind_group(
+    device: &Device,
+    primitive_count: usize,
+) -> (BindGroup, BindGroupLayout, Buffer) {
     let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Primitives Buffer"),
-        contents: bytemuck::cast_slice(&vec![SDFPrimitive::new();primitive_count]),
+        contents: bytemuck::cast_slice(&vec![SDFPrimitive::new(); primitive_count]),
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
     });
 
@@ -111,7 +155,6 @@ fn mk_primitive_bind_group(device: &Device, primitive_count: usize) -> (BindGrou
                 min_binding_size: None,
             },
             count: None,
-
         }],
         label: Some("primitives_bind_group_layout"),
     });
