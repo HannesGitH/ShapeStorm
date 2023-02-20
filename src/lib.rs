@@ -1,7 +1,7 @@
 mod camera;
-mod texture;
-mod primitives;
 mod level;
+mod primitives;
+// mod texture;
 
 use std::time::Duration;
 
@@ -13,46 +13,10 @@ use winit::{
 
 use winit::window::Window;
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 3],
-    // tex_coords: [f32; 2], // NEW!
+enum CurrentScene {
+    Level(level::LevelManager),
+    // Menu,
 }
-
-impl Vertex {
-    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
-        use std::mem;
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                // wgpu::VertexAttribute {
-                //     offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                //     shader_location: 1,
-                //     format: wgpu::VertexFormat::Float32x2,
-                // },
-            ],
-        }
-    }
-}
-
-const VERTICES: &[Vertex; 4] = &[
-	Vertex { position: [-1.0, -1.0, 0.0] },
-	Vertex { position: [-1.0,  1.0, 0.0] },
-	Vertex { position: [ 1.0,  1.0, 0.0] },
-	Vertex { position: [ 1.0, -1.0, 0.0] },
-];
-
-const INDICES: &[u16] = &[
-	2, 1, 0,
-	3, 2, 0
-];
 
 struct State {
     surface: wgpu::Surface,
@@ -63,14 +27,10 @@ struct State {
     window: Window,
     clear_color: wgpu::Color,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,//weg
-    index_buffer: wgpu::Buffer,//weg
-    // num_indices: u32,
-    primitive_manager: primitives::PrimitiveManager,
-    // diffuse_bind_group: wgpu::BindGroup,
-    // diffuse_texture: texture::Texture,
-    camera: camera::RenderCamera,
+    vertex_buffer: wgpu::Buffer, //weg
+    index_buffer: wgpu::Buffer,  //weg
     mouse_pressed: bool,
+    scene: CurrentScene,
 }
 
 impl State {
@@ -123,67 +83,13 @@ impl State {
             view_formats: surface.get_capabilities(&adapter).formats[..0].to_vec(),
         };
         surface.configure(&device, &config);
-        // let diffuse_bytes = include_bytes!("texturetest1.jpg");
-        // let diffuse_texture =
-        //     texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "texturetest1.jpg")
-        //         .unwrap();
 
-        // let texture_bind_group_layout =
-        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        //         entries: &[
-        //             wgpu::BindGroupLayoutEntry {
-        //                 binding: 0,
-        //                 visibility: wgpu::ShaderStages::FRAGMENT,
-        //                 ty: wgpu::BindingType::Texture {
-        //                     multisampled: false,
-        //                     view_dimension: wgpu::TextureViewDimension::D2,
-        //                     sample_type: wgpu::TextureSampleType::Float { filterable: true },
-        //                 },
-        //                 count: None,
-        //             },
-        //             wgpu::BindGroupLayoutEntry {
-        //                 binding: 1,
-        //                 visibility: wgpu::ShaderStages::FRAGMENT,
-        //                 // This should match the filterable field of the
-        //                 // corresponding Texture entry above.
-        //                 ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-        //                 count: None,
-        //             },
-        //         ],
-        //         label: Some("texture_bind_group_layout"),
-        //     });
+        let (levelman, shader, render_pipeline_layout) =
+            level::LevelManager::new(0.5, 0, &device, size);
 
-        // let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        //     layout: &texture_bind_group_layout,
-        //     entries: &[
-        //         wgpu::BindGroupEntry {
-        //             binding: 0,
-        //             resource: wgpu::BindingResource::TextureView(&diffuse_texture.view), // CHANGED!
-        //         },
-        //         wgpu::BindGroupEntry {
-        //             binding: 1,
-        //             resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler), // CHANGED!
-        //         },
-        //     ],
-        //     label: Some("diffuse_bind_group"),
-        // });
+        let scene = CurrentScene::Level(levelman);
 
-        let camera = camera::RenderCamera::new(&device, config.width, config.height);
-
-        let primitive_manager = primitives::PrimitiveManager::new(&device, 2);
-
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader1.wgsl"));
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    &primitive_manager.bind_group_layout,
-                    // &texture_bind_group_layout, 
-                    &camera.bind_group_layout,
-                    ],
-                push_constant_ranges: &[],
-            });
-
+        //XXX: put that in the level man or a state match block?
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
@@ -226,17 +132,23 @@ impl State {
         });
 
         //weg
-        let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(&device, &wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+        let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
+            &device,
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(VERTICES),
+                usage: wgpu::BufferUsages::VERTEX,
+            },
+        );
         //weg
-        let index_buffer = wgpu::util::DeviceExt::create_buffer_init(&device, &wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
+        let index_buffer = wgpu::util::DeviceExt::create_buffer_init(
+            &device,
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            },
+        );
 
         Self {
             window,
@@ -252,10 +164,8 @@ impl State {
             // num_indices,
             // diffuse_bind_group,
             // diffuse_texture,
-            primitive_manager,
             mouse_pressed: false,
-            camera,
-
+            scene,
         }
     }
 
@@ -269,41 +179,42 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.camera.resize(new_size.width, new_size.height);
-
+            match &mut self.scene {
+                CurrentScene::Level(ref mut levelman) => {
+                    levelman.resize(new_size);
+                }
+            }
         }
     }
 
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        match event {
-            WindowEvent::KeyboardInput {
-                input:
-                    KeyboardInput {
-                        virtual_keycode: Some(key),
-                        state,
-                        ..
-                    },
-                ..
-            } => self.camera.controller.process_keyboard(*key, *state),
-            WindowEvent::MouseWheel { delta, .. } => {
-                self.camera.controller.process_scroll(delta);
-                true
-            }
-            WindowEvent::MouseInput {
-                button: MouseButton::Left,
-                state,
-                ..
-            } => {
-                self.mouse_pressed = *state == ElementState::Pressed;
-                true
-            }
-            _ => false,
+    fn input(&mut self, input: Input) -> bool {
+        if match &mut self.scene {
+            CurrentScene::Level(levelman) => levelman.input(&input),
+        } {
+            return true;
+        }
+        match input {
+            Input::Window(event) => match event {
+                WindowEvent::MouseInput {
+                    button: MouseButton::Left,
+                    state,
+                    ..
+                } => {
+                    self.mouse_pressed = *state == ElementState::Pressed;
+                    true
+                }
+                _ => false,
+            },
+            Input::Device(_) => false,
         }
     }
 
     fn update(&mut self, dt: Duration) {
-        self.camera.update(dt, &self.queue);
-        self.primitive_manager.update(dt, &self.queue);
+        match &mut self.scene {
+            CurrentScene::Level(levelman) => {
+                levelman.update(dt, &self.queue);
+            }
+        }
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -331,8 +242,12 @@ impl State {
             });
             render_pass.set_pipeline(&self.render_pipeline);
             // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.camera.bind_group, &[]);
-            render_pass.set_bind_group(0, &self.primitive_manager.bind_group, &[]);
+            match &mut self.scene {
+                CurrentScene::Level(levelman) => {
+                    render_pass.set_bind_group(1, &levelman.camera.bind_group, &[]);
+                    render_pass.set_bind_group(0, &levelman.primitive_manager.bind_group, &[]);
+                }
+            }
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.
             render_pass.draw_indexed(0..(INDICES.len() as u32), 0, 0..1);
@@ -347,6 +262,11 @@ impl State {
 
         Ok(())
     }
+}
+
+enum Input<'a> {
+    Device(&'a DeviceEvent),
+    Window(&'a WindowEvent<'a>),
 }
 
 pub async fn run() {
@@ -379,16 +299,18 @@ pub async fn run() {
             state.window().request_redraw();
         }
         Event::DeviceEvent {
-            event: DeviceEvent::MouseMotion{ delta, },
-            .. // We're not using device_id currently
-        } => if state.mouse_pressed {
-            state.camera.controller.process_mouse(delta.0, delta.1)
+            event,
+            ..
+        } => if !state.input(Input::Device(&event)) {
+            match event {
+                _ => {}
+            }
         }
         Event::WindowEvent {
             ref event,
             window_id,
         } if window_id == state.window().id() => {
-            if !state.input(event) {
+            if !state.input(Input::Window(event)) {
                 match event {
                     #[cfg(not(target_arch="wasm32"))]
                     WindowEvent::CloseRequested
@@ -414,3 +336,53 @@ pub async fn run() {
         _ => {}
     });
 }
+
+// MARK: useless stuff
+
+// vertices
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Vertex {
+    position: [f32; 3],
+    // tex_coords: [f32; 2], // NEW!
+}
+
+impl Vertex {
+    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+        use std::mem;
+        wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                // wgpu::VertexAttribute {
+                //     offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                //     shader_location: 1,
+                //     format: wgpu::VertexFormat::Float32x2,
+                // },
+            ],
+        }
+    }
+}
+
+const VERTICES: &[Vertex; 4] = &[
+    Vertex {
+        position: [-1.0, -1.0, 0.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [1.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [1.0, -1.0, 0.0],
+    },
+];
+
+const INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];

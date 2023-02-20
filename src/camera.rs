@@ -3,7 +3,7 @@ use wgpu::{Device, Queue};
 use wgpu::util::DeviceExt;
 use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
-use winit::dpi::PhysicalPosition;
+use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::*;
 
 #[rustfmt::skip]
@@ -46,17 +46,17 @@ impl Camera {
             Vector3::unit_y(),
         )
     }
-    pub fn calc_inverse_matrix(&self) -> Matrix4<f32> {
-        // self.calc_matrix().invert().unwrap()
-        let (sin_pitch, cos_pitch) = self.pitch.opposite().0.sin_cos();
-        let (sin_yaw, cos_yaw) = self.yaw.opposite().0.sin_cos();
+    // pub fn calc_inverse_matrix(&self) -> Matrix4<f32> {
+    //     // self.calc_matrix().invert().unwrap()
+    //     let (sin_pitch, cos_pitch) = self.pitch.opposite().0.sin_cos();
+    //     let (sin_yaw, cos_yaw) = self.yaw.opposite().0.sin_cos();
 
-        Matrix4::look_to_rh(
-            self.position * -1.0,
-            Vector3::new(cos_pitch * cos_yaw, sin_pitch, cos_pitch * sin_yaw).normalize(),
-            Vector3::unit_y(),
-        )
-    }
+    //     Matrix4::look_to_rh(
+    //         self.position * -1.0,
+    //         Vector3::new(cos_pitch * cos_yaw, sin_pitch, cos_pitch * sin_yaw).normalize(),
+    //         Vector3::unit_y(),
+    //     )
+    // }
 }
 
 pub struct Projection {
@@ -266,11 +266,11 @@ pub struct RenderCamera {
 }
 
 impl RenderCamera {
-    pub fn new(device : &Device, width: u32, height: u32)->Self{
+    pub fn new(device : &Device, size: PhysicalSize<u32>)->Self{
 
         let camera = Camera::new((-300.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
         let projection =
-            Projection::new(width, height, cgmath::Deg(120.0), 1.0, 1000.0);
+            Projection::new(size.width, size.height, cgmath::Deg(120.0), 1.0, 1000.0);
         let controller = CameraController::new(50.0, 0.5);
 
         let mut uniform = CameraUniform::new();
