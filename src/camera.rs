@@ -121,11 +121,11 @@ impl CameraController {
         };
         match key {
             VirtualKeyCode::W | VirtualKeyCode::Up => {
-                self.amount_forward = amount;
+                self.amount_up = amount;
                 true
             }
             VirtualKeyCode::S | VirtualKeyCode::Down => {
-                self.amount_backward = amount;
+                self.amount_down = amount;
                 true
             }
             VirtualKeyCode::A | VirtualKeyCode::Left => {
@@ -137,11 +137,11 @@ impl CameraController {
                 true
             }
             VirtualKeyCode::Space => {
-                self.amount_up = amount;
+                self.amount_forward = amount;
                 true
             }
             VirtualKeyCode::LShift => {
-                self.amount_down = amount;
+                self.amount_backward = amount;
                 true
             }
             _ => false,
