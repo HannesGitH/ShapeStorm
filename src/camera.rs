@@ -3,7 +3,7 @@ use wgpu::{Device, Queue};
 use wgpu::util::DeviceExt;
 use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
-use winit::dpi::{PhysicalPosition, PhysicalSize};
+use winit::dpi::{PhysicalSize};
 use winit::event::*;
 
 #[rustfmt::skip]
@@ -46,22 +46,11 @@ impl Camera {
             Vector3::unit_y(),
         )
     }
-    // pub fn calc_inverse_matrix(&self) -> Matrix4<f32> {
-    //     // self.calc_matrix().invert().unwrap()
-    //     let (sin_pitch, cos_pitch) = self.pitch.opposite().0.sin_cos();
-    //     let (sin_yaw, cos_yaw) = self.yaw.opposite().0.sin_cos();
-
-    //     Matrix4::look_to_rh(
-    //         self.position * -1.0,
-    //         Vector3::new(cos_pitch * cos_yaw, sin_pitch, cos_pitch * sin_yaw).normalize(),
-    //         Vector3::unit_y(),
-    //     )
-    // }
 }
 
 pub struct Projection {
     pixels : (u32, u32),
-    fovy: Rad<f32>,
+    pub fovy: Rad<f32>,
     znear: f32,
     zfar: f32,
 }
@@ -102,7 +91,7 @@ pub struct CameraController {
     amount_down: f32,
     rotate_horizontal: f32,
     rotate_vertical: f32,
-    scroll: f32,
+    // scroll: f32,
     speed: f32,
     sensitivity: f32,
 }
@@ -118,7 +107,7 @@ impl CameraController {
             amount_down: 0.0,
             rotate_horizontal: 0.0,
             rotate_vertical: 0.0,
-            scroll: 0.0,
+            // scroll: 0.0,
             speed,
             sensitivity,
         }
@@ -164,13 +153,13 @@ impl CameraController {
         self.rotate_vertical = mouse_dy as f32;
     }
 
-    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
-        self.scroll = match delta {
-            // I'm assuming a line is about 100 pixels
-            MouseScrollDelta::LineDelta(_, scroll) => -scroll * 0.5,
-            MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => -*scroll as f32,
-        };
-    }
+    // pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
+    //     self.scroll = match delta {
+    //         // I'm assuming a line is about 100 pixels
+    //         MouseScrollDelta::LineDelta(_, scroll) => -scroll * 0.5,
+    //         MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => -*scroll as f32,
+    //     };
+    // }
 
     pub fn update_camera(&mut self, camera: &mut Camera, dt: Duration) {
         let dt = dt.as_secs_f32();
@@ -182,15 +171,15 @@ impl CameraController {
         camera.position += forward * (self.amount_forward - self.amount_backward) * self.speed * dt;
         camera.position += right * (self.amount_right - self.amount_left) * self.speed * dt;
 
-        // Move in/out (aka. "zoom")
-        // Note: this isn't an actual zoom. The camera's position
-        // changes when zooming. I've added this to make it easier
-        // to get closer to an object you want to focus on.
-        let (pitch_sin, pitch_cos) = camera.pitch.0.sin_cos();
-        let scrollward =
-            Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin).normalize();
-        camera.position += scrollward * self.scroll * self.speed * self.sensitivity * dt;
-        self.scroll = 0.0;
+        // // Move in/out (aka. "zoom")
+        // // Note: this isn't an actual zoom. The camera's position
+        // // changes when zooming. I've added this to make it easier
+        // // to get closer to an object you want to focus on.
+        // let (pitch_sin, pitch_cos) = camera.pitch.0.sin_cos();
+        // let scrollward =
+        //     Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin).normalize();
+        // camera.position += scrollward * self.scroll * self.speed * self.sensitivity * dt;
+        // self.scroll = 0.0;
 
         // Move up/down. Since we don't use roll, we can just
         // modify the y coordinate directly.
@@ -268,10 +257,10 @@ pub struct RenderCamera {
 impl RenderCamera {
     pub fn new(device : &Device, size: PhysicalSize<u32>)->Self{
 
-        let camera = Camera::new((-300.0, 0.0, 0.0), cgmath::Deg(0.0), cgmath::Deg(0.0));
+        let camera = Camera::new((0.0, 0.0, 0.0), cgmath::Deg(90.0), cgmath::Deg(0.0));
         let projection =
             Projection::new(size.width, size.height, cgmath::Deg(120.0), 1.0, 1000.0);
-        let controller = CameraController::new(50.0, 0.5);
+        let controller = CameraController::new(100.0, 0.5);
 
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(&camera, &projection);

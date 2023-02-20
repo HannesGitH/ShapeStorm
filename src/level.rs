@@ -66,7 +66,10 @@ impl LevelManager {
                     ..
                 } => self.camera.controller.process_keyboard(*key, *state),
                 WindowEvent::MouseWheel { delta, .. } => {
-                    self.camera.controller.process_scroll(delta);
+                    self.camera.projection.fovy = cgmath::num_traits::clamp(self.camera.projection.fovy + cgmath::Rad(match delta {
+                        winit::event::MouseScrollDelta::LineDelta(_, y) => *y,
+                        winit::event::MouseScrollDelta::PixelDelta(pos) => pos.y as f32,
+                    }/5000.0), cgmath::Rad(0.3), cgmath::Rad(3.0));
                     true
                 }
                 WindowEvent::MouseInput {
