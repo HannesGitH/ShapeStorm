@@ -84,7 +84,7 @@ struct MarchOutput {
 }
 
 const max_steps = 16u;
-const max_distance = 1000.0;
+// const max_distance = 1000.0;
 const epsilon = 1.0;
     
 fn march(ray: Ray) -> MarchOutput {
@@ -96,13 +96,13 @@ fn march(ray: Ray) -> MarchOutput {
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let out = calc_step(ray.origin + ray.direction * dst);
         dst = dst + out.distance;
-        color = color + out.color;
         if (out.distance < epsilon) {
             steps = i;
             // color = out.color;
             color = vec4<f32>(1.0);
             break;
         }
+        color = color + out.color;
         // if (dst > max_distance) {
         //     steps = i;
         //     color = vec4<f32>(0.0);
@@ -125,12 +125,12 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
-    let c = vec3<f32>(1000.0,1000.0,1000.0);
-    let q = from_point;
+    let c = vec2<f32>(1000.0,1000.0);
+    let q = from_point-primitive.position;
     // let relative_point_q = (modf(q/c+0.5).fract-vec3<f32>(0.5))*c; //to spec
-    var whole = vec3<f32>();
-    let mod_point = (modf(q/c+0.5*c,&whole)-vec3<f32>(0.5))*c; //to old spec
-    let relative_point = fast_inverse_qrotate_vector(primitive.rotation,mod_point) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); 
+    var whole = vec2<f32>();
+    let mod_point = vec3<f32>((modf(q.xy/c+0.5*c,&whole)-vec2<f32>(0.5))*c,q.z); //to old spec
+    let relative_point = fast_inverse_qrotate_vector(primitive.rotation,mod_point);// - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); 
     // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); 
     // let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
     // let bound = vec3<f32>(primitive.instances);
