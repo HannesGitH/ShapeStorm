@@ -125,12 +125,20 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
-    let relative_point = fast_inverse_qrotate_vector(primitive.rotation,from_point) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //TO-DO: hier geht etwas schief
-    // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); //TO-DO: hier geht etwas schief
-    let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
-    let bound = vec3<f32>(primitive.instances);
-    let q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
-    dst = distance_to_box_frame(q, primitive.data);
+    let relative_point = fast_inverse_qrotate_vector(primitive.rotation,from_point) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); 
+    // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); 
+    // let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
+    // let bound = vec3<f32>(primitive.instances);
+    // let q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
+    // let relative_point_q = fast_inverse_qrotate_vector(primitive.rotation,q) - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); //we can rotate the multiple instances in itself
+    // let relative_point_q = mod(q+0.5*c,c)-0.5*c;
+    let c = vec3<f32>(1000.0,1000.0,1000.0);
+    let q = relative_point;
+    var whole = vec3<f32>();
+    // let relative_point_q = (modf(q/c+0.5)-vec3<f32>(0.5))*c;//to spec
+    let relative_point_q = (modf(q/c+0.5*c,&whole)-vec3<f32>(0.5))*c; //to old spec
+    // let relative_point_q = q;
+    dst = distance_to_box_frame(relative_point_q, primitive.data);
     // switch(primitive.typus) {
     //     case 0u: {dst = distance_to_box_frame(relative_point, primitive.data);}
     //     default: {}
