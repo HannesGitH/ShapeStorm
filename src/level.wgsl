@@ -11,10 +11,12 @@ struct Primitive {
     // blend_strength: f32,
 }
 
+//THIS COMPILES
 struct Primitives {
     prims: array<Primitive>,
 }
 
+//SO DOES THIS
 @group(0) @binding(0)
 var<storage, read> primitives: Primitives;
 
@@ -153,15 +155,16 @@ struct StepOutput {
 
 fn calc_step(from_point: vec3<f32>) -> StepOutput {
     var min_dst = 100000.0;
+    //BUT THIS DOESNT
     // let pp = primitives.prims;
-    // for (var i = 0; i < arrayLength(pp); i = i + 1) {
-    //     let dst = distance_to_primitive(from_point, pp[i]);
+    // for (var i : ptr<> = 0; i < arrayLength(pp); i = i + 1) {
+    //     let dst = distance_to_primitive(from_point, pp[&i]);
     //     if (dst < min_dst) {
     //         min_dst = dst;
     //     }
     // }
-    min_dst = distance_to_primitive(from_point, primitives.prims[0]);
-    return StepOutput(min_dst, primitives.prims[0].rgba / max(/*sqrt*/min_dst/3.0,1.0));
+    min_dst = distance_to_primitive(from_point, primitives.prims[1]);
+    return StepOutput(min_dst, primitives.prims[1].rgba / max(/*sqrt*/min_dst/3.0,1.0));
 }
 
 
