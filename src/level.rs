@@ -147,29 +147,30 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     primitive.data = x4!(hardness_to_scale(hardness,rng.f32()));
     primitive.speed = hardness_to_speed(hardness,rng.f32());
     primitive.place_in_spawn_area(rng);
-
+    primitive.rgba = x4!(rng.f32());
     //these integers are not in line with the ones used for enum representation, but that doenst matter here
-    match rng.u32(..Typus::MAX_VALUE) {
+    match rng.u32(..=Typus::MAX_VALUE) {
         0 => {
             primitive.typus = Typus::Ellipsoid;
         }
         1 => {
             primitive.typus = Typus::BoxFrame;
+            primitive.data[3] /= 10.0 ;
         }
         _ => {}
     };
 }
 
 fn hardness_to_speed(hardness: f32, random: f32) -> f32 {
-    const MIN_SPEED: f32 = 1.0;
-    const MAX_SPEED: f32 = 20.0;
+    const MIN_SPEED: f32 = 5.0;
+    const MAX_SPEED: f32 = 30.0;
 
     MIN_SPEED + hardness * random * (MAX_SPEED - MIN_SPEED)
 }
 
 fn hardness_to_scale(hardness: f32, random: f32) -> f32 {
-    const MIN_SCALE: f32 = 1.0;
-    const MAX_SCALE: f32 = 20.0;
+    const MIN_SCALE: f32 = 5.0;
+    const MAX_SCALE: f32 = 50.0;
 
     MIN_SCALE + hardness * random * (MAX_SCALE - MIN_SCALE)
 }
