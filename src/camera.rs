@@ -16,6 +16,32 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 
 const SAFE_FRAC_PI_2: f32 = FRAC_PI_2 - 0.0001;
 
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone)] //, bytemuck::Pod, bytemuck::Zeroable)]
+pub enum Effect {
+    None,
+    GlassyOnion,
+    // HalfStep,
+}
+// unsafe impl bytemuck::Contiguous for Effect {
+//     type Int = u32;
+//     const MIN_VALUE: u32 = Effect::None as u32;
+//     const MAX_VALUE: u32 = Effect::HalfStep as u32;
+// }
+unsafe impl bytemuck::Zeroable for Effect {
+    fn zeroed() -> Self {
+        unsafe { core::mem::zeroed() }
+    }
+}
+unsafe impl bytemuck::Pod for Effect {}
+
+impl Default for Effect {
+    fn default() -> Self {
+        Effect::None
+    }
+}
+
 #[derive(Debug)]
 pub struct Camera {
     pub position: Point3<f32>,
@@ -204,7 +230,18 @@ impl CameraController {
     }
 }
 
-
+impl Default for CameraUniform {
+    fn default() -> Self {
+        Self {
+            view_position: [1.0; 4],
+            world_to_screen: cgmath::Matrix4::identity().into(),
+            screen_to_world: cgmath::Matrix4::identity().into(),
+            pixel_normalization_matrix: cgmath::Matrix4::identity().into(),
+            effect : Effect::default(),
+            _pad: [0.0; 3],
+        }
+    }
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -215,6 +252,8 @@ pub struct CameraUniform {
     world_to_screen: [[f32; 4]; 4],
     screen_to_world: [[f32; 4]; 4],
     pixel_normalization_matrix : [[f32; 4]; 4],
+    pub effect : Effect,
+    _pad: [f32; 3],
 }
 
 impl CameraUniform {
@@ -224,6 +263,8 @@ impl CameraUniform {
             world_to_screen: cgmath::Matrix4::identity().into(),
             screen_to_world: cgmath::Matrix4::identity().into(),
             pixel_normalization_matrix: cgmath::Matrix4::identity().into(),
+            // effect : Effect::GlassyOnion,
+            ..Default::default()
         }
     }
 

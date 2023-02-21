@@ -29,6 +29,7 @@ struct CameraUniform {
     world_to_screen: mat4x4<f32>,
     screen_to_world: mat4x4<f32>,
     pixel_normalization: mat4x4<f32>,
+    effect: u32,
 };
 @group(1) @binding(0) // 1.
 var<uniform> camera: CameraUniform;
@@ -98,6 +99,11 @@ fn march(ray: Ray) -> MarchOutput {
     var color = vec4<f32>(.0);
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let out = calc_step(ray.origin + ray.direction * dst);
+        // if (camera.effect == 2u) {
+        //     dst = dst + out.distance/2.0;
+        // }else{
+        //     dst = dst + out.distance;
+        // }
         dst = dst + out.distance;
         if (out.distance < epsilon) {
             steps = i;
@@ -108,7 +114,9 @@ fn march(ray: Ray) -> MarchOutput {
         color = color + out.color / color_damper;
         if (dst > max_distance) {
             steps = i;
-            // color = vec4<f32>(0.0);
+            if (camera.effect == 1u) {
+                color = out.color;
+            }
             break;
         }
     }
