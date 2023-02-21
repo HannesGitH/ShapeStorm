@@ -2,7 +2,7 @@ use fastrand;
 use wgpu::{Device, PipelineLayout, ShaderModule};
 use winit::{dpi::PhysicalSize, event::{WindowEvent, ElementState, KeyboardInput, MouseButton, DeviceEvent}};
 
-use crate::{camera, primitives, Input};
+use crate::{camera, primitives::{self, Typus}, Input};
 
 pub(crate) struct LevelManager {
     hardness: f32,
@@ -20,7 +20,9 @@ impl LevelManager {
         size: PhysicalSize<u32>,
     ) -> (Self, ShaderModule, PipelineLayout) {
         let rng = fastrand::Rng::with_seed(seed);
-        let primitive_manager = primitives::PrimitiveManager::new(&device, 2);
+        let mut primitive_manager = primitives::PrimitiveManager::new(&device, 2);
+        primitive_manager.primitives[0].typus = Typus::Sphere;
+        primitive_manager.primitives[0].position = [0.0, 0.0, 800.0];
         let camera = camera::RenderCamera::new(&device, size);
         let shader = device.create_shader_module(wgpu::include_wgsl!("level.wgsl"));
         let render_pipeline_layout =

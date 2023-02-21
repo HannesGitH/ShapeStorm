@@ -5,7 +5,7 @@ use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone)] //, bytemuck::Pod, bytemuck::Zeroable)]
-enum Typus {
+pub enum Typus {
     BoxFrame,
     Sphere,
     // Cube,
@@ -45,29 +45,19 @@ impl Default for Typus {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SDFPrimitive {
-    position: [f32; 3],
-    _speed: f32,
-    rotation: [f32; 4],
-    data: [f32; 4],
-    instances: [u32; 3],
-    instances_distance: f32,
-    rgba: [f32; 4],
-    typus: Typus,
+    pub position: [f32; 3],
+    pub _speed: f32,
+    pub rotation: [f32; 4],
+    pub data: [f32; 4],
+    pub instances: [u32; 3],
+    pub instances_distance: f32,
+    pub rgba: [f32; 4],
+    pub typus: Typus,
     _pad4: [f32; 3],
     // operation: u32,
     // blend_strength: f32,
     // filler: [u32; 5], // 32 byte alignment
 }
-// struct Primitive {
-//     position: vec3<f32>,
-//     rotation: vec4<f32>,
-//     data: vec4<f32>,
-//     instances: vec3<u32>,
-//     rgba: vec4<f32>,
-//     typus: u32,
-//     // operation: u32,
-//     // blend_strength: f32,
-// }
 
 impl SDFPrimitive {
     pub fn new() -> Self {
@@ -85,6 +75,12 @@ impl SDFPrimitive {
     }
 }
 
+// #[repr(C)]
+// #[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
+// struct Primitives {
+//     primitives: [SDFPrimitive; 10],
+// }
+
 pub struct PrimitiveManager {
     pub primitives: Vec<SDFPrimitive>,
     pub buffer: Buffer,
@@ -94,11 +90,11 @@ pub struct PrimitiveManager {
 }
 
 impl PrimitiveManager {
-    pub fn new(device: &Device, primitive_count: usize) -> Self {
+    pub fn new(device: &Device, primitive_count: u8) -> Self {
         let (bind_group, bind_group_layout, buffer) =
             mk_primitive_bind_group(device, primitive_count);
 
-        let primitives = vec![SDFPrimitive::new(); primitive_count];
+        let primitives = vec![SDFPrimitive::new(); primitive_count as usize];
 
         Self {
             primitives: primitives,
@@ -120,15 +116,18 @@ impl PrimitiveManager {
         let total_time = self.total_time;
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
-                // primitive.position[0] += 0.01*dt.as_secs_f32();
-                // primitive.data[0] += 0.5*dt.as_secs_f32();
-                // primitive.data[1] += 0.5*dt.as_secs_f32();
-                // primitive.data[2] += 0.5*dt.as_secs_f32();
-                primitive.data[3] = 1.0; //*dt.as_secs_f32();
-                                         // primitive.rotation = cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(25.0*total_time.as_secs_f32())).into();
-                                         // primitive.rgba[0] -= 0.01*dt.as_secs_f32();
-                                         // primitive.instances_distance += 1.0*dt.as_secs_f32();
-                                         // primitive.position[1] -= primitive._speed*dt.as_secs_f32(); //eigtl [0], nur für test des renderns gerade 1
+                // primitive.data[0] += 0.5 * dt.as_secs_f32();
+                // primitive.data[1] += 0.5 * dt.as_secs_f32();
+                // primitive.data[2] += 0.5 * dt.as_secs_f32();
+                // primitive.data[3] = 1.0; //*dt.as_secs_f32();
+                // primitive.rotation = cgmath::Quaternion::from_axis_angle(
+                //     cgmath::Vector3::unit_z(),
+                //     cgmath::Deg(25.0 * total_time.as_secs_f32()),
+                // )
+                // .into();
+                // primitive.rgba[0] -= 0.01 * dt.as_secs_f32();
+                // primitive.instances_distance += 1.0 * dt.as_secs_f32();
+                // primitive.position[0] -= primitive._speed * dt.as_secs_f32();
             }
         };
         self.update_primitives(updater, queue)
@@ -137,11 +136,11 @@ impl PrimitiveManager {
 
 fn mk_primitive_bind_group(
     device: &Device,
-    primitive_count: usize,
+    primitive_count: u8,
 ) -> (BindGroup, BindGroupLayout, Buffer) {
     let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Primitives Buffer"),
-        contents: bytemuck::cast_slice(&vec![SDFPrimitive::new(); primitive_count]),
+        contents: bytemuck::cast_slice(&vec![SDFPrimitive::new(); primitive_count as usize]),
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
     });
 

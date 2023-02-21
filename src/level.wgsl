@@ -12,6 +12,7 @@ struct Primitive {
 }
 
 struct Primitives {
+    // length: u32,
     prims: array<Primitive>,
 }
 
@@ -153,16 +154,16 @@ struct StepOutput {
 
 fn calc_step(from_point: vec3<f32>) -> StepOutput {
     var min_dst = 100000.0;
-    //BUT THIS DOESNT
-    // for (var i:u32 = 0u; i < 10u; i = i + 1u) {
-    //     let dst = distance_to_primitive(from_point, get_ith_primitive(i));
-    //     if (dst < min_dst) {
-    //         min_dst = dst;
-    //     }
-    // }
-    let prim = get_ith_primitive(0u);
-    min_dst = distance_to_primitive(from_point, prim);
-    return StepOutput(min_dst, prim.rgba / max(/*sqrt*/min_dst/3.0,1.0));
+    var color = vec4<f32>(0.0);
+    for (var i:u32 = 0u; i < arrayLength(&primitives.prims); i = i + 1u) {
+        let prim = get_ith_primitive(i);
+        let dst = distance_to_primitive(from_point, prim);
+        color = color + prim.rgba / max(/*sqrt*/dst/3.0,1.0);
+        if (dst < min_dst) {
+            min_dst = dst;
+        }
+    }
+    return StepOutput(min_dst, color);
 }
 
 fn get_ith_primitive(i: u32) -> Primitive {
