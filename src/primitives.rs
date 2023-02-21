@@ -1,13 +1,12 @@
-use std::time::Duration;
+use std::{time::Duration};
 
-use cgmath::Rotation3;
 use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone)] //, bytemuck::Pod, bytemuck::Zeroable)]
 pub enum Typus {
     BoxFrame,
-    Sphere,
+    Ellipsoid,
     // Cube,
     // Torus,
     // Cylinder,
@@ -25,7 +24,7 @@ pub enum Typus {
 unsafe impl bytemuck::Contiguous for Typus {
     type Int = u32;
     const MIN_VALUE: u32 = Typus::BoxFrame as u32;
-    const MAX_VALUE: u32 = Typus::Sphere as u32;
+    const MAX_VALUE: u32 = Typus::Ellipsoid as u32;
 }
 unsafe impl bytemuck::Zeroable for Typus {
     fn zeroed() -> Self {
@@ -46,8 +45,9 @@ impl Default for Typus {
 #[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SDFPrimitive {
     pub position: [f32; 3],
-    pub _speed: f32,
+    pub speed: f32,
     pub rotation: [f32; 4],
+    pub rotation_delta: [f32; 4],
     pub data: [f32; 4],
     pub instances: [u32; 3],
     pub instances_distance: f32,
@@ -62,13 +62,9 @@ pub struct SDFPrimitive {
 impl SDFPrimitive {
     pub fn new() -> Self {
         Self {
-            rgba: [1.0; 4],
-            position: [0.0, 0.0, 1000.0],
+            position: [0.0, 0.0, 10000.0],
             rotation: [0.0, 0.0, 0.0, 1.0],
-            data: [20.0; 4],
-            instances: [2; 3],
-            instances_distance: 70.0,
-            _speed: 50.0,
+            rotation_delta: [0.0, 0.0, 0.0, 1.0],
             // typus: Typus::Sphere,
             ..Default::default()
         }
@@ -113,21 +109,14 @@ impl PrimitiveManager {
     }
     pub fn update(&mut self, dt: Duration, queue: &wgpu::Queue) {
         self.total_time += dt;
-        let total_time = self.total_time;
+        // let total_time = self.total_time;
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
-                // primitive.data[0] += 0.5 * dt.as_secs_f32();
-                // primitive.data[1] += 0.5 * dt.as_secs_f32();
-                // primitive.data[2] += 0.5 * dt.as_secs_f32();
-                // primitive.data[3] = 1.0; //*dt.as_secs_f32();
-                // primitive.rotation = cgmath::Quaternion::from_axis_angle(
-                //     cgmath::Vector3::unit_z(),
-                //     cgmath::Deg(25.0 * total_time.as_secs_f32()),
-                // )
-                // .into();
-                // primitive.rgba[0] -= 0.01 * dt.as_secs_f32();
-                // primitive.instances_distance += 1.0 * dt.as_secs_f32();
-                // primitive.position[0] -= primitive._speed * dt.as_secs_f32();
+                primitive.position[0] -= primitive.speed * dt.as_secs_f32();
+                // let (v0, v1) = (Simd::from(primitive.rotation), Simd::from(primitive.rotation_delta));
+                // primitive.rotation = (v0 * v1).into();
+                primitive.rotation = (cgmath::Quaternion::from(primitive.rotation)
+                    * cgmath::Quaternion::from(primitive.rotation_delta)).into();
             }
         };
         self.update_primitives(updater, queue)

@@ -1,7 +1,9 @@
 
 struct Primitive {
     position: vec3<f32>,
+    _speed: f32,
     rotation: vec4<f32>,
+    _rotation_delta: vec4<f32>,
     data: vec4<f32>,
     instances: vec3<u32>,
     instances_distance: f32,
@@ -104,11 +106,11 @@ fn march(ray: Ray) -> MarchOutput {
             break;
         }
         color = color + out.color / color_damper;
-        // if (dst > max_distance) {
-        //     steps = i;
-        //     color = vec4<f32>(0.0);
-        //     break; d
-        // }
+        if (dst > max_distance) {
+            steps = i;
+            // color = vec4<f32>(0.0);
+            break;
+        }
     }
     color = color;
     return MarchOutput(dst, color, steps);

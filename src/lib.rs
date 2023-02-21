@@ -2,6 +2,7 @@ mod camera;
 mod level;
 mod primitives;
 // mod texture;
+mod macros;
 
 use std::time::Duration;
 
@@ -84,8 +85,10 @@ impl State {
         };
         surface.configure(&device, &config);
 
-        let (levelman, shader, render_pipeline_layout) =
-            level::LevelManager::new(0.5, 0, &device, size);
+        let randomseed = fastrand::u64(..); //wenn es n levelsystem gibt vorher setten, klar
+        let (mut levelman, shader, render_pipeline_layout) =
+            level::LevelManager::new(0.5, randomseed, &device, size);
+        levelman.start(&queue);
 
         let scene = CurrentScene::Level(levelman);
 
@@ -298,12 +301,11 @@ pub async fn run() {
             // request it.
             state.window().request_redraw();
         }
-        Event::DeviceEvent {
-            event,
-            ..
-        } => if !state.input(Input::Device(&event)) {
-            match event {
-                _ => {}
+        Event::DeviceEvent { event, .. } => {
+            if !state.input(Input::Device(&event)) {
+                match event {
+                    _ => {}
+                }
             }
         }
         Event::WindowEvent {
@@ -312,7 +314,7 @@ pub async fn run() {
         } if window_id == state.window().id() => {
             if !state.input(Input::Window(event)) {
                 match event {
-                    #[cfg(not(target_arch="wasm32"))]
+                    #[cfg(not(target_arch = "wasm32"))]
                     WindowEvent::CloseRequested
                     | WindowEvent::KeyboardInput {
                         input:
