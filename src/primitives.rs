@@ -112,7 +112,7 @@ impl PrimitiveManager {
         // let total_time = self.total_time;
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
-                primitive.position[0] -= primitive.speed * dt.as_secs_f32();
+                primitive.position[2] -= primitive.speed * dt.as_secs_f32();
                 // let (v0, v1) = (Simd::from(primitive.rotation), Simd::from(primitive.rotation_delta));
                 // primitive.rotation = (v0 * v1).into();
                 primitive.rotation = (cgmath::Quaternion::from(primitive.rotation)
