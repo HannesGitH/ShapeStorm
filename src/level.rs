@@ -13,6 +13,8 @@ use crate::{
     x4, Input, x3,
 };
 
+mod distance;
+
 const VIEW_DST: f32 = 1000.0;
 
 const PRIMITIVE_COUNT: u8 = 10;

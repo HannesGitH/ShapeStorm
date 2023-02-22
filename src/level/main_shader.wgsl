@@ -139,6 +139,7 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
     direction = normalize(direction-origin);
     return Ray(origin, direction);
 }
+
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
     let infinite_repition_period = vec2<f32>(1000.0,1000.0);
@@ -226,10 +227,11 @@ fn distance_to_ellipsoid(from_point: vec3<f32>, sphere_data: vec4<f32>) -> f32 {
     return k0 * ( k0 - 1.0 ) / k1;
 }
 
+const sqrt_third = 0.57735026918962576450914878050196; //thanks copilot
+
 fn distance_to_octahedron(from_point: vec3<f32>, octa_data: vec4<f32>) -> f32 {
     let octa_size = octa_data.x;
     let p = abs(from_point);
-    let sqrt_third = 0.57735026918962576450914878050196; //thanks copilot
     return (p.x+p.y+p.z-octa_size)*sqrt_third;
 }
 
