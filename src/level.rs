@@ -223,7 +223,7 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     primitive.rgba = x4!(rng.f32());
     let max_len = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b));
     const DISTANCE_FACTOR: f32 = 3.5;
-    if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 2.0 { //safety distance to prevent artifacting
+    if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 10.0 { //safety distance to prevent artifacts
         let triple_this_axis = || {
             (hardness > rng.f32()) as u32
         };
@@ -232,6 +232,7 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     } else {
         primitive.instances = x3!(0);
     }
+    // primitive.twist = rng.f32()*5.0; //FIXME: doesnt work yet, disabled in shader rn
    
     //these integers are not in line with the ones used for enum representation, but that doesn't matter here
     match rng.u32(..=Typus::MAX_VALUE) {
@@ -258,7 +259,7 @@ const MIN_SPEED: f32 = VIEW_DST / 20.0;
 const MAX_SPEED: f32 = VIEW_DST / 2.0;
 
 const MIN_SCALE: f32 = VIEW_DST / 100.0;
-const MAX_SCALE: f32 = VIEW_DST / 2.0;
+const MAX_SCALE: f32 = VIEW_DST / 4.0;
 
 const MIN_X: f32 = -VIEW_DST;
 const MAX_X: f32 = VIEW_DST;

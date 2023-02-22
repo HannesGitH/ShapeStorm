@@ -9,6 +9,7 @@ struct Primitive {
     instances_distance: f32,
     rgba: vec4<f32>,
     typus: u32,
+    twist: f32,
     // operation: u32,
     // blend_strength: f32,
 }
@@ -140,25 +141,34 @@ fn mk_ray_from_camera(uv: vec2<f32>) -> Ray {
 }
 fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     var dst = 100000.0;
-    let c = vec2<f32>(1000.0,1000.0);
+    let infinite_repition_period = vec2<f32>(1000.0,1000.0);
     //translate to primitive space
-    let q = from_point-primitive.position;
+    var q = from_point-primitive.position;
     //infinite repition
-    // let relative_point_q = (modf(q/c+0.5).fract-vec3<f32>(0.5))*c; //to spec
+    //// let relative_point_q = (modf(q/c+0.5).fract-vec3<f32>(0.5))*c; //to spec
     var whole = vec2<f32>();
-    let mod_point = vec3<f32>((modf(q.xy/c+0.5*c,&whole)-vec2<f32>(0.5))*c,q.z); //to old spec
+    let mod_point = vec3<f32>((modf(q.xy/infinite_repition_period+0.5*infinite_repition_period,&whole)-vec2<f32>(0.5))*infinite_repition_period,q.z); //to old spec
     let relative_point = fast_inverse_qrotate_vector(primitive.rotation,mod_point);// - fast_inverse_qrotate_vector(primitive.rotation,primitive.position); 
-    // let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); 
+    q = relative_point;
+    //// let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position); 
+    // // twisting //FIXME: this is not working, it brings enourmous amounts of noise
+    // let twist = primitive.twist;
+    // let cos_twist = cos(twist*q.y);
+    // let sin_twist = sin(twist*q.y);
+    // let twist_matrix = mat2x2(cos_twist,-sin_twist,sin_twist,cos_twist);
+    // let twisted_point = vec3(twist_matrix*q.xz,q.y);
+    // q = twisted_point;
     // finite instancing
-    let dis : vec3<f32> = round(relative_point/primitive.instances_distance);
+    let dis : vec3<f32> = round(q/primitive.instances_distance);
     let bound = vec3<f32>(primitive.instances);
-    let relative_point_q : vec3<f32> = relative_point-primitive.instances_distance*clamp(dis,-bound,bound);
-    // dst = distance_to_box_frame(relative_point_q, primitive.data);
+    let instanced_point : vec3<f32> = q-primitive.instances_distance*clamp(dis,-bound,bound);
+    //// dst = distance_to_box_frame(relative_point_q, primitive.data);
+    q = instanced_point;
     switch(primitive.typus) {
-        case 0u: {dst = distance_to_box_frame(relative_point_q, primitive.data);}
-        case 1u: {dst = distance_to_ellipsoid(relative_point_q, primitive.data);}
-        case 2u: {dst = distance_to_octahedron(relative_point_q, primitive.data);}
-        case 3u: {dst = distance_to_chain_link(relative_point_q, primitive.data);}
+        case 0u: {dst = distance_to_box_frame(q, primitive.data);}
+        case 1u: {dst = distance_to_ellipsoid(q, primitive.data);}
+        case 2u: {dst = distance_to_octahedron(q, primitive.data);}
+        case 3u: {dst = distance_to_chain_link(q, primitive.data);}
         default: {}
     }
     return dst;

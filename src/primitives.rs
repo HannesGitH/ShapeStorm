@@ -42,7 +42,8 @@ pub struct SDFPrimitive {
     pub instances_distance: f32,
     pub rgba: [f32; 4],
     pub typus: Typus,
-    _pad4: [f32; 3],
+    pub twist: f32,
+    _pad4: [f32; 2],
     // operation: u32,
     // blend_strength: f32,
     // filler: [u32; 5], // 32 byte alignment
