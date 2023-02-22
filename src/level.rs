@@ -1,4 +1,5 @@
 use bytemuck::Contiguous;
+use cgmath::{Quaternion, Vector3};
 use fastrand;
 use wgpu::{Device, PipelineLayout, ShaderModule};
 use winit::{
@@ -203,6 +204,21 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     let hardness = *params.hardness;
     primitive.data = x4!(hardness_to_scale(hardness, rng.f32()));
     primitive.speed = hardness_to_speed(hardness, rng.f32());
+    let (u, v, w) = (rng.f32(), rng.f32(), rng.f32());
+    let π = std::f32::consts::PI;
+    primitive.rotation = [
+        (1.0 - u).sqrt() * (2.0 * π * v).sin(),
+        (1.0 - u).sqrt() * (2.0 * π * v).cos(),
+        (u).sqrt() * (2.0 * π * w).sin(),
+        (u).sqrt() * (2.0 * π * w).cos(),
+    ];
+    let rand_rot = || 0.1 * hardness * rng.f32();
+    primitive.rotation_delta = Quaternion::from_arc(
+        Vector3::unit_z(),
+        Vector3::new(0.1 * rand_rot(), 0.1 * rand_rot(), 1.0 - 0.1 * rand_rot()),
+        None,
+    )
+    .into();
     primitive.place_in_spawn_area(rng);
     primitive.rgba = x4!(rng.f32());
     //these integers are not in line with the ones used for enum representation, but that doenst matter here
@@ -218,7 +234,6 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     };
 }
 
-
 const MIN_SPEED: f32 = VIEW_DST / 20.0;
 const MAX_SPEED: f32 = VIEW_DST / 2.0;
 
@@ -231,7 +246,6 @@ const MIN_Y: f32 = -VIEW_DST;
 const MAX_Y: f32 = VIEW_DST;
 const MIN_Z: f32 = VIEW_DST + MAX_SCALE;
 const MAX_Z: f32 = VIEW_DST + MAX_SCALE + 100.0;
-
 
 fn hardness_to_speed(hardness: f32, random: f32) -> f32 {
     MIN_SPEED + hardness * random * (MAX_SPEED - MIN_SPEED)
