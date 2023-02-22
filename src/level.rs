@@ -10,7 +10,7 @@ use winit::{
 use crate::{
     camera,
     primitives::{self, SDFPrimitive, Typus},
-    x4, Input,
+    x4, Input, x3,
 };
 
 const VIEW_DST: f32 = 1000.0;
@@ -221,6 +221,11 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     .into();
     primitive.place_in_spawn_area(rng);
     primitive.rgba = x4!(rng.f32());
+    let triple_this_axis = || {
+        (hardness > rng.f32()) as u32
+    };
+    primitive.instances = x3!(triple_this_axis());
+    primitive.instances_distance = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b))*3.5;
     //these integers are not in line with the ones used for enum representation, but that doenst matter here
     match rng.u32(..=Typus::MAX_VALUE) {
         0 => {
@@ -237,8 +242,8 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
 const MIN_SPEED: f32 = VIEW_DST / 20.0;
 const MAX_SPEED: f32 = VIEW_DST / 2.0;
 
-const MIN_SCALE: f32 = VIEW_DST / 20.0;
-const MAX_SCALE: f32 = VIEW_DST / 10.0 * 8.0;
+const MIN_SCALE: f32 = VIEW_DST / 50.0;
+const MAX_SCALE: f32 = VIEW_DST / 5.0;
 
 const MIN_X: f32 = -VIEW_DST;
 const MAX_X: f32 = VIEW_DST;
