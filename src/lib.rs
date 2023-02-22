@@ -88,7 +88,7 @@ impl State {
 
         let random_seed = fastrand::u64(..); //XXX: set according to level (from level-system)
         let (mut single_level_manager, shader, render_pipeline_layout) =
-            level::SingleLevelManager::new(0.2, random_seed, &device, size);
+            level::SingleLevelManager::new(0.7, random_seed, &device, size);
         single_level_manager.start(&queue);
 
         let scene = CurrentScene::Level(single_level_manager);

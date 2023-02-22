@@ -14,14 +14,22 @@ pub fn get_min_dst_to_primitives(
     let mut closest = 0usize;
     let point = Vector3::new(from_point[0]-500.0, from_point[1]-500.0, from_point[2]);
     for (i, primitive) in primitives.iter_mut().enumerate() {
+        // primitive.data = crate::x4!(100.0);
+        // primitive.typus = Typus::Ellipsoid;
+        // primitive.rgba = [0.0,0.0,0.0,1.0];
+        
         // if i == 0 {
         //     primitive.rgba = [0.0,0.0,1.0,1.0];
-        //     primitive.position = [from_point[0],from_point[1],from_point[2]];
+        //     primitive.data = crate::x4!(1.0);
+        //     primitive.position = [0.0,0.0, point.z+100.0];
+        //     primitive.typus = Typus::Ellipsoid;
         //     continue;
         // }
         // if i == 1 {
         //     primitive.rgba = [0.0,1.0,0.0,1.0];
-        //     primitive.position = point.into();
+        //     primitive.data = crate::x4!(1.0);
+        //     primitive.position = [point.x, point.y, point.z+100.0];
+        //     primitive.typus = Typus::Ellipsoid;
         //     continue;
         // }
         let dst = distance_to_primitive(point, primitive);
@@ -30,8 +38,9 @@ pub fn get_min_dst_to_primitives(
             min_dst = dst;
             closest = i;
         }
-        if dst < 20.0 {
+        if dst < 100.0 {
             primitive.rgba = [1.0, 0.0, 0.0, 1.0];
+            // print!("{}", i);
         }
     }
     // primitives[closest].rgba = [1.0, 0.0, 0.0, 1.0];
