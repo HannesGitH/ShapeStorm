@@ -81,7 +81,7 @@ impl LevelManager {
         assert!(hardness >= 0.0 && hardness <= 1.0);
         let rng = fastrand::Rng::with_seed(seed);
         let primitive_manager = primitives::PrimitiveManager::new(&device, PRIMITIVE_COUNT);
-        let camera = camera::RenderCamera::new(&device, size);
+        let camera = camera::RenderCamera::new(&device, size, VIEW_DST);
         let shader = device.create_shader_module(wgpu::include_wgsl!("level.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
