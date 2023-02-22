@@ -221,11 +221,18 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     .into();
     primitive.place_in_spawn_area(rng);
     primitive.rgba = x4!(rng.f32());
-    let triple_this_axis = || {
-        (hardness > rng.f32()) as u32
-    };
-    primitive.instances = x3!(triple_this_axis());
-    primitive.instances_distance = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b))*3.5;
+    let max_len = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b));
+    const DISTANCE_FACTOR: f32 = 3.5;
+    if max_len < VIEW_DST / DISTANCE_FACTOR / 5.0 { //safety distance to prevent artifacting
+        let triple_this_axis = || {
+            (hardness > rng.f32()) as u32
+        };
+        primitive.instances = x3!(triple_this_axis());
+        primitive.instances_distance = max_len*DISTANCE_FACTOR;
+    } else {
+        primitive.instances = x3!(0);
+    }
+   
     //these integers are not in line with the ones used for enum representation, but that doesn't matter here
     match rng.u32(..=Typus::MAX_VALUE) {
         0 => {
@@ -243,7 +250,7 @@ const MIN_SPEED: f32 = VIEW_DST / 20.0;
 const MAX_SPEED: f32 = VIEW_DST / 2.0;
 
 const MIN_SCALE: f32 = VIEW_DST / 50.0;
-const MAX_SCALE: f32 = VIEW_DST / 5.0;
+const MAX_SCALE: f32 = VIEW_DST / 2.0;
 
 const MIN_X: f32 = -VIEW_DST;
 const MAX_X: f32 = VIEW_DST;

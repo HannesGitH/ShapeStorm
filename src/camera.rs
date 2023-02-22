@@ -22,6 +22,8 @@ const SAFE_FRAC_PI_2: f32 = FRAC_PI_2 - 0.0001;
 pub enum Effect {
     None,
     GlassyOnion,
+    GlowOff,
+    CleanFromWater,
     // HalfStep,
 }
 // unsafe impl bytemuck::Contiguous for Effect {
@@ -251,7 +253,7 @@ impl CameraUniform {
             world_to_screen: cgmath::Matrix4::identity().into(),
             screen_to_world: cgmath::Matrix4::identity().into(),
             pixel_normalization_matrix: cgmath::Matrix4::identity().into(),
-            // effect : Effect::GlassyOnion,
+            // effect : Effect::CleanFromWater,
             ..Default::default()
         }
     }

@@ -111,16 +111,19 @@ fn march(ray: Ray) -> MarchOutput {
             color = vec4<f32>(1.0);
             break;
         }
+        if (camera.effect != 2u) { //2u = glow-off
+            color = color + out.color / color_damper;
+        }
         color = color + out.color / color_damper;
         if (dst > max_distance) {
             steps = i;
-            if (camera.effect == 1u) {
+            if (camera.effect == 1u) { //1u = glassy-onion
                 color = out.color;
             }
             break;
         }
     }
-    color = color;
+    // color = color * (max_distance - dst) / max_distance;
     return MarchOutput(dst, color, steps);
 }
 
@@ -170,7 +173,11 @@ fn calc_step(from_point: vec3<f32>) -> StepOutput {
     for (var i:u32 = 0u; i < arrayLength(&primitives.prims); i = i + 1u) {
         let prim = get_ith_primitive(i);
         let dst = distance_to_primitive(from_point, prim);
-        color = color + prim.rgba / max(/*sqrt*/dst/3.0,1.0);
+        if (camera.effect == 3u) {//clean-from-water
+            color = color + prim.rgba / max(dst*dst*dst/max_distance,1.0);
+        } else {
+            color = color + prim.rgba / max(dst/3.0,1.0);
+        }
         if (dst < min_dst) {
             min_dst = dst;
         }
