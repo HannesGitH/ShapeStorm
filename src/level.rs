@@ -17,7 +17,7 @@ use self::distance::get_min_dst_to_primitives;
 
 mod distance;
 
-const VIEW_DST: f32 = 1000.0;
+pub const VIEW_DST: f32 = 1000.0;
 
 const PRIMITIVE_COUNT: u8 = 10;
 
