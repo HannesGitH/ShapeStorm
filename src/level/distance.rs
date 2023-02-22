@@ -80,7 +80,7 @@ fn distance_to_primitive(from_point: Vector3<f32>, primitive: &SDFPrimitive) -> 
         primitive.instances[2].cast(),
     );
     let instanced_point: Vector3<f32> =
-        q - primitive.instances_distance * clamp_element_wise(dis, ZERO_VEC3 - bound, bound);
+        q - vec3_from(primitive.instances_distance).mul_element_wise( clamp_element_wise(dis, ZERO_VEC3 - bound, bound));
     //// dst = distance_to_box_frame(relative_point_q, primitive.data);
     q = instanced_point;
     let dst = match primitive.typus {

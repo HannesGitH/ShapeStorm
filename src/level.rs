@@ -153,8 +153,8 @@ impl SingleLevelManager {
         let dst = get_min_dst_to_primitives(self.camera.uniform.view_position, &mut self.primitive_manager.primitives);
         // println!("dst: {}", dst);
         if dst < 1.0 {
-            // self.game_over = true;
-            println!("Game Over");
+            self.game_over = true;
+            println!("Game Over {}", dst);
         }
     }
 
