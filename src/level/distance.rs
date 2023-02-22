@@ -158,7 +158,7 @@ fn fast_inverse_qrotate_vector(r: [f32; 4], v: Vector3<f32>) -> Vector3<f32> {
     // let rhs = [xyz.x,xyz.y,xyz.z, - dot(v, rr.xyz)];
     // return rhs[..3] * r[3] - r.xyz * rhs.w - r.xyz.cross( rhs.xyz);
     let qr: Quaternion<f32> = r.into();
-    qr.invert() * v
+    qr.invert().rotate_vector(v)
 }
 
 fn abs(v: Vector3<f32>) -> Vector3<f32> {
