@@ -156,7 +156,9 @@ fn distance_to_primitive(from_point: vec3<f32>, primitive: Primitive) -> f32 {
     // dst = distance_to_box_frame(relative_point_q, primitive.data);
     switch(primitive.typus) {
         case 0u: {dst = distance_to_box_frame(relative_point_q, primitive.data);}
-        case 1u: {dst = distance_to_sphere(relative_point_q, primitive.data);}
+        case 1u: {dst = distance_to_ellipsoid(relative_point_q, primitive.data);}
+        case 2u: {dst = distance_to_octahedron(relative_point_q, primitive.data);}
+        case 3u: {dst = distance_to_chain_link(relative_point_q, primitive.data);}
         default: {}
     }
     return dst;
@@ -204,11 +206,30 @@ fn distance_to_box_frame(from_point : vec3<f32>, box_data : vec4<f32>)->f32
         length(max(vec3(q.x,q.y,p.z),vec3(.0)))+min(max(q.x,max(q.y,p.z)),0.0));
 }
 
-fn distance_to_sphere(from_point: vec3<f32>, sphere_data: vec4<f32>) -> f32 {
-    let sphere_radius = sphere_data.w;
-    return length(from_point) - sphere_radius;
+fn distance_to_ellipsoid(from_point: vec3<f32>, sphere_data: vec4<f32>) -> f32 {
+    // thats would be a sphere
+    // let sphere_radius = sphere_data.w;
+    // return length(from_point) - sphere_radius;
+    // degree two approximation
+    let k0 : f32 = length(from_point/sphere_data.xyz);
+    let k1 : f32 = length(from_point/sphere_data.xyz/sphere_data.xyz);
+    return k0 * ( k0 - 1.0 ) / k1;
 }
 
+fn distance_to_octahedron(from_point: vec3<f32>, octa_data: vec4<f32>) -> f32 {
+    let octa_size = octa_data.x;
+    let p = abs(from_point);
+    let sqrt_third = 0.57735026918962576450914878050196; //thanks copilot
+    return (p.x+p.y+p.z-octa_size)*sqrt_third;
+}
+
+fn distance_to_chain_link(from_point: vec3<f32>, chain_data: vec4<f32>) -> f32 {
+    let len = chain_data.x;
+    let arc_radius = chain_data.y;
+    let girth = chain_data.z;
+    let q = vec3( from_point.x, max(abs(from_point.y)-len,0.0), from_point.z );
+    return length(vec2(length(q.xy)-arc_radius,q.z)) - girth;
+}
 
 // quaternions
 fn qmul(q1: vec4<f32>,  q2:vec4<f32>)->vec4<f32>

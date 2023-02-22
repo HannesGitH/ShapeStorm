@@ -7,24 +7,13 @@ use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device};
 pub enum Typus {
     BoxFrame,
     Ellipsoid,
-    // Cube,
-    // Torus,
-    // Cylinder,
-    // Cone,
-    // Capsule,
-    // Plane,
-    // Triangle,
-    // Pyramid,
-    // Icosahedron,
-    // Dodecahedron,
-    // Octahedron,
-    // Tetrahedron,
-    // Custom,
+    Octahedron,
+    ChainLink,
 }
 unsafe impl bytemuck::Contiguous for Typus {
     type Int = u32;
     const MIN_VALUE: u32 = Typus::BoxFrame as u32;
-    const MAX_VALUE: u32 = Typus::Ellipsoid as u32;
+    const MAX_VALUE: u32 = Typus::ChainLink as u32;
 }
 unsafe impl bytemuck::Zeroable for Typus {
     fn zeroed() -> Self {

@@ -223,7 +223,7 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     primitive.rgba = x4!(rng.f32());
     let max_len = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b));
     const DISTANCE_FACTOR: f32 = 3.5;
-    if max_len < VIEW_DST / DISTANCE_FACTOR / 5.0 { //safety distance to prevent artifacting
+    if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 2.0 { //safety distance to prevent artifacting
         let triple_this_axis = || {
             (hardness > rng.f32()) as u32
         };
@@ -240,16 +240,24 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
         }
         1 => {
             primitive.typus = Typus::BoxFrame;
-            primitive.data[3] /= 10.0;
+            primitive.data[3] /= 15.0; //frame thickness
         }
-        _ => {}
+        2 => {
+            primitive.typus = Typus::Octahedron;
+        }
+        3 => {
+            primitive.typus = Typus::ChainLink;
+            primitive.data[2] /= 10.0; //link girth
+            primitive.data[0] -= MIN_SCALE; //no length is fine as well thats a donut then
+        }
+        _ => {},//unreachable!(),
     };
 }
 
 const MIN_SPEED: f32 = VIEW_DST / 20.0;
 const MAX_SPEED: f32 = VIEW_DST / 2.0;
 
-const MIN_SCALE: f32 = VIEW_DST / 50.0;
+const MIN_SCALE: f32 = VIEW_DST / 100.0;
 const MAX_SCALE: f32 = VIEW_DST / 2.0;
 
 const MIN_X: f32 = -VIEW_DST;
