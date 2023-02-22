@@ -6,6 +6,7 @@ use winit::dpi::Pixel;
 
 use crate::primitives::{SDFPrimitive, Typus};
 
+//TODO: this is not working! sometimes it does, most times it doesn't
 pub fn get_min_dst_to_primitives(
     from_point: [f32; 4],
     primitives: &mut Vec<SDFPrimitive>,
@@ -32,7 +33,7 @@ pub fn get_min_dst_to_primitives(
         //     primitive.typus = Typus::Ellipsoid;
         //     continue;
         // }
-        let dst = distance_to_primitive(point, primitive);
+        let dst = distance_to_primitive(point, primitive);//put in thread?
         // primitive.rgba = [0.0, 0.0, 0.0, 1.0];
         if dst < min_dst {
             min_dst = dst;
@@ -43,7 +44,7 @@ pub fn get_min_dst_to_primitives(
             // print!("{}", i);
         }
     }
-    // primitives[closest].rgba = [1.0, 0.0, 0.0, 1.0];
+    // primitives[closest].rgba = [1.0, 0.0, 1.0, 1.0];
     min_dst
 }
 
