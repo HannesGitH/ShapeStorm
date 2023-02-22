@@ -109,7 +109,11 @@ fn march(ray: Ray) -> MarchOutput {
         if (out.distance < epsilon) {
             steps = i;
             // color = out.color;
-            color = vec4<f32>(1.0);
+            if (camera.effect == 4u) { //4u = black-body
+                color = vec4<f32>(0.0);
+            } else {
+                color = vec4<f32>(1.0);
+            }
             break;
         }
         if (camera.effect != 2u) { //2u = glow-off

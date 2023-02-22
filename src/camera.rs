@@ -24,6 +24,7 @@ pub enum Effect {
     GlassyOnion,
     GlowOff,
     CleanFromWater,
+    BlackBody,
     // HalfStep,
 }
 // unsafe impl bytemuck::Contiguous for Effect {
@@ -238,7 +239,7 @@ impl Default for CameraUniform {
 pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
-    view_position: [f32; 4],
+    pub(crate) view_position: [f32; 4],
     world_to_screen: [[f32; 4]; 4],
     screen_to_world: [[f32; 4]; 4],
     pixel_normalization_matrix : [[f32; 4]; 4],

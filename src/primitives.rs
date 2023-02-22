@@ -114,7 +114,7 @@ impl PrimitiveManager {
 
     pub fn get_spawnable_primitive(&mut self) -> Option<&mut SDFPrimitive> {
         self.primitives.iter_mut().find(|primitive| {
-            primitive.position[2] < -1000.0
+            primitive.position[2] < -1000.0 || primitive.position[2] > 3000.0
         })
     }
 }

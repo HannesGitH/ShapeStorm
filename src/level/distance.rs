@@ -1,39 +1,57 @@
 use cgmath::{
      BaseFloat, ElementWise, InnerSpace, Quaternion, Rotation, Vector2,
-    Vector3,  Point3,
+    Vector3, 
 };
 use winit::dpi::Pixel;
 
 use crate::primitives::{SDFPrimitive, Typus};
 
 pub fn get_min_dst_to_primitives(
-    from_point: Point3<f32>,
-    primitives: &Vec<SDFPrimitive>,
+    from_point: [f32; 4],
+    primitives: &mut Vec<SDFPrimitive>,
 ) -> f32 {
     let mut min_dst = 100000.0;
-    for primitive in primitives {
-        let dst = distance_to_primitive(Vector3::new(from_point.x, from_point.y, from_point.z), *primitive);
+    let mut closest = 0usize;
+    let point = Vector3::new(from_point[0]-500.0, from_point[1]-500.0, from_point[2]);
+    for (i, primitive) in primitives.iter_mut().enumerate() {
+        // if i == 0 {
+        //     primitive.rgba = [0.0,0.0,1.0,1.0];
+        //     primitive.position = [from_point[0],from_point[1],from_point[2]];
+        //     continue;
+        // }
+        // if i == 1 {
+        //     primitive.rgba = [0.0,1.0,0.0,1.0];
+        //     primitive.position = point.into();
+        //     continue;
+        // }
+        let dst = distance_to_primitive(point, primitive);
+        // primitive.rgba = [0.0, 0.0, 0.0, 1.0];
         if dst < min_dst {
             min_dst = dst;
+            closest = i;
+        }
+        if dst < 20.0 {
+            primitive.rgba = [1.0, 0.0, 0.0, 1.0];
         }
     }
+    // primitives[closest].rgba = [1.0, 0.0, 0.0, 1.0];
     min_dst
 }
 
-fn distance_to_primitive(from_point: Vector3<f32>, primitive: SDFPrimitive) -> f32 {
-    let infinite_repition_period = Vector2::new(1000.0, 1000.0);
+fn distance_to_primitive(from_point: Vector3<f32>, primitive: &SDFPrimitive) -> f32 {
+    let infinite_repetition_period = Vector2::new(1000.0, 1000.0);
     //translate to primitive space
     let mut q: Vector3<f32> =
-        from_point - <[f32; 3] as Into<Vector3<f32>>>::into(primitive.position);
+        from_point - Vector3::from(primitive.position);
     //infinite repetition
     let (x, y) = (
-        (q.x % infinite_repition_period.x + infinite_repition_period.x)
-            % infinite_repition_period.x,
-        (q.y % infinite_repition_period.y + infinite_repition_period.y)
-            % infinite_repition_period.y,
+        ((q.x+0.5*infinite_repetition_period.x) % infinite_repetition_period.x)-0.5*infinite_repetition_period.x,
+        ((q.y+0.5*infinite_repetition_period.y) % infinite_repetition_period.y)-0.5*infinite_repetition_period.y,
     );
     let mod_point = Vector3::new(x, y, q.z);
-    let relative_point = fast_inverse_qrotate_vector(primitive.rotation, mod_point);
+    q = mod_point;
+    //rotate to primitive space
+    let relative_point = fast_inverse_qrotate_vector(primitive.rotation, q);
     q = relative_point;
     //// let relative_point = qrotate_vector(qinverse(primitive.rotation),from_point) - qrotate_vector(qinverse(primitive.rotation),primitive.position);
     // // twisting //FIXME: this is not working, it brings enourmous amounts of noise
@@ -56,12 +74,13 @@ fn distance_to_primitive(from_point: Vector3<f32>, primitive: SDFPrimitive) -> f
         q - primitive.instances_distance * clamp_element_wise(dis, ZERO_VEC3 - bound, bound);
     //// dst = distance_to_box_frame(relative_point_q, primitive.data);
     q = instanced_point;
-    match primitive.typus {
+    let dst = match primitive.typus {
         Typus::BoxFrame => distance_to_box_frame(q, primitive.data),
         Typus::Ellipsoid => distance_to_ellipsoid(q, primitive.data),
         Typus::Octahedron => distance_to_octahedron(q, primitive.data),
         Typus::ChainLink => distance_to_chain_link(q, primitive.data),
-    }
+    };
+    dst
 }
 
 const ZERO_VEC3: Vector3<f32> = Vector3::new(0.0, 0.0, 0.0);

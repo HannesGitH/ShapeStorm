@@ -150,9 +150,11 @@ impl SingleLevelManager {
                 self.spawn_data.did_spawn();
             }
         };
-        let dst = get_min_dst_to_primitives(self.camera.camera.position.into(), &self.primitive_manager.primitives);
+        let dst = get_min_dst_to_primitives(self.camera.uniform.view_position, &mut self.primitive_manager.primitives);
+        // println!("dst: {}", dst);
         if dst < 1.0 {
-            self.game_over = true;
+            // self.game_over = true;
+            println!("Game Over");
         }
     }
 
@@ -209,59 +211,70 @@ struct RespawnParams<'a> {
     rng: &'a fastrand::Rng,
     hardness: &'a f32,
 }
+
+const DEBUG_PRIMITIVES : bool = false;
 fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     let rng = params.rng;
     let hardness = *params.hardness;
-    primitive.data = x4!(hardness_to_scale(hardness, rng.f32()));
-    primitive.speed = hardness_to_speed(hardness, rng.f32());
-    let (u, v, w) = (rng.f32(), rng.f32(), rng.f32());
-    let pi = std::f32::consts::PI;//∏
-    primitive.rotation = [
-        (1.0 - u).sqrt() * (2.0 * pi * v).sin(),
-        (1.0 - u).sqrt() * (2.0 * pi * v).cos(),
-        (u).sqrt() * (2.0 * pi * w).sin(),
-        (u).sqrt() * (2.0 * pi * w).cos(),
-    ];
-    let rand_rot = || 0.1 * hardness * rng.f32();
-    primitive.rotation_delta = Quaternion::from_arc(
-        Vector3::unit_z(),
-        Vector3::new(0.1 * rand_rot(), 0.1 * rand_rot(), 1.0 - 0.1 * rand_rot()),
-        None,
-    )
-    .into();
-    primitive.place_in_spawn_area(rng);
-    primitive.rgba = x4!(rng.f32());
-    let max_len = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b));
-    const DISTANCE_FACTOR: f32 = 3.5;
-    if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 10.0 { //safety distance to prevent artifacts
-        let triple_this_axis = || {
-            (hardness > rng.f32()) as u32
-        };
-        primitive.instances = x3!(triple_this_axis());
-        primitive.instances_distance = max_len*DISTANCE_FACTOR;
+    if DEBUG_PRIMITIVES {
+        primitive.data = x4!(10.0);
+        primitive.speed = 0.0;
+        primitive.typus = Typus::Ellipsoid;
+        primitive.place_in_spawn_area(rng);
+        primitive.position[2] -= 1000.0;
     } else {
-        primitive.instances = x3!(0);
-    }
-    // primitive.twist = rng.f32()*5.0; //FIXME: doesnt work yet, disabled in shader rn
-   
-    //these integers are not in line with the ones used for enum representation, but that doesn't matter here
-    match rng.u32(..=Typus::MAX_VALUE) {
-        0 => {
-            primitive.typus = Typus::Ellipsoid;
+
+        primitive.data = x4!(hardness_to_scale(hardness, rng.f32()));
+        primitive.speed = hardness_to_speed(hardness, rng.f32());
+        let (u, v, w) = (rng.f32(), rng.f32(), rng.f32());
+        let pi = std::f32::consts::PI;//∏
+        primitive.rotation = [
+            (1.0 - u).sqrt() * (2.0 * pi * v).sin(),
+            (1.0 - u).sqrt() * (2.0 * pi * v).cos(),
+            (u).sqrt() * (2.0 * pi * w).sin(),
+            (u).sqrt() * (2.0 * pi * w).cos(),
+            ];
+            let rand_rot = || 0.1 * hardness * rng.f32();
+            primitive.rotation_delta = Quaternion::from_arc(
+                Vector3::unit_z(),
+                Vector3::new(0.1 * rand_rot(), 0.1 * rand_rot(), 1.0 - 0.1 * rand_rot()),
+                None,
+            )
+            .into();
+        primitive.place_in_spawn_area(rng);
+        primitive.rgba = x4!(rng.f32());
+        let max_len = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b));
+        const DISTANCE_FACTOR: f32 = 3.5;
+        if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 10.0 { //safety distance to prevent artifacts
+            let triple_this_axis = || {
+                (hardness > rng.f32()) as u32
+            };
+            primitive.instances = x3!(triple_this_axis());
+            primitive.instances_distance = max_len*DISTANCE_FACTOR;
+        } else {
+            primitive.instances = x3!(0);
         }
-        1 => {
-            primitive.typus = Typus::BoxFrame;
-            primitive.data[3] /= 15.0; //frame thickness
+        // primitive.twist = rng.f32()*5.0; //FIXME: doesnt work yet, disabled in shader rn
+        
+        //these integers are not in line with the ones used for enum representation, but that doesn't matter here
+        match rng.u32(..=Typus::MAX_VALUE) {
+            0 => {
+                primitive.typus = Typus::Ellipsoid;
+            }
+            1 => {
+                primitive.typus = Typus::BoxFrame;
+                primitive.data[3] /= 15.0; //frame thickness
+            }
+            2 => {
+                primitive.typus = Typus::Octahedron;
+            }
+            3 => {
+                primitive.typus = Typus::ChainLink;
+                primitive.data[2] /= 10.0; //link girth
+                primitive.data[0] -= MIN_SCALE; //no length is fine as well thats a donut then
+            }
+            _ => {},//unreachable!(),
         }
-        2 => {
-            primitive.typus = Typus::Octahedron;
-        }
-        3 => {
-            primitive.typus = Typus::ChainLink;
-            primitive.data[2] /= 10.0; //link girth
-            primitive.data[0] -= MIN_SCALE; //no length is fine as well thats a donut then
-        }
-        _ => {},//unreachable!(),
     };
 }
 
