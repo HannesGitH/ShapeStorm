@@ -62,7 +62,7 @@ pub struct SDFPrimitive {
 impl SDFPrimitive {
     pub fn new() -> Self {
         Self {
-            position: [0.0, 0.0, 10000.0],
+            position: [0.0, 0.0, -10000.0],
             rotation: [0.0, 0.0, 0.0, 1.0],
             rotation_delta: [0.0, 0.0, 0.0, 1.0],
             // typus: Typus::Sphere,
@@ -82,7 +82,7 @@ pub struct PrimitiveManager {
     pub buffer: Buffer,
     pub bind_group: BindGroup,
     pub bind_group_layout: BindGroupLayout,
-    total_time: Duration,
+    // total_time: Duration,
 }
 
 impl PrimitiveManager {
@@ -97,7 +97,7 @@ impl PrimitiveManager {
             buffer,
             bind_group,
             bind_group_layout,
-            total_time: Duration::from_secs(0),
+            // total_time: Duration::from_secs(0),
         }
     }
     pub fn update_primitives<F>(&mut self, primitive_updater: F, queue: &wgpu::Queue)
@@ -108,7 +108,7 @@ impl PrimitiveManager {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&self.primitives));
     }
     pub fn update(&mut self, dt: Duration, queue: &wgpu::Queue) {
-        self.total_time += dt;
+        // self.total_time += dt;
         // let total_time = self.total_time;
         let updater = |primitives: &mut Vec<SDFPrimitive>| {
             for primitive in primitives.iter_mut() {
@@ -120,6 +120,12 @@ impl PrimitiveManager {
             }
         };
         self.update_primitives(updater, queue)
+    }
+
+    pub fn get_spawnable_primitive(&mut self) -> Option<&mut SDFPrimitive> {
+        self.primitives.iter_mut().find(|primitive| {
+            primitive.position[2] < -1000.0
+        })
     }
 }
 

@@ -9,10 +9,47 @@ use winit::{
 use crate::{
     camera,
     primitives::{self, SDFPrimitive, Typus},
-    Input, x4,
+    x4, Input,
 };
 
+const VIEW_DST: f32 = 1000.0;
+
 const PRIMITIVE_COUNT: u8 = 10;
+
+struct SpawnData {
+    last_spawn: std::time::Duration,
+    min_spawn_time_s: f32,
+    max_spawn_time_s: f32,
+    next_random: f32,
+    rng: fastrand::Rng,
+}
+
+impl SpawnData {
+    fn new(rng: fastrand::Rng) -> Self {
+        Self {
+            last_spawn: std::time::Duration::from_secs(0),
+            min_spawn_time_s: 0.5,
+            max_spawn_time_s: 5.0,
+            next_random: rng.f32(),
+            rng,
+        }
+    }
+    fn should_spawn(&mut self, dt: std::time::Duration, hardness: f32) -> bool {
+        self.last_spawn += dt;
+        let spawn_time = self.max_spawn_time_s
+            - (self.max_spawn_time_s - self.min_spawn_time_s) * hardness * self.next_random;
+        if self.last_spawn.as_secs_f32() > spawn_time {
+            self.last_spawn = std::time::Duration::from_secs(0);
+            true
+        } else {
+            false
+        }
+    }
+    fn did_spawn(&mut self) {
+        self.last_spawn = std::time::Duration::from_secs(0);
+        self.next_random = self.rng.f32();
+    }
+}
 
 // struct Range {
 //     min: f32,
@@ -24,11 +61,14 @@ const PRIMITIVE_COUNT: u8 = 10;
 // };
 
 pub(crate) struct LevelManager {
+    /// 0.0 - 1.0
     hardness: f32,
     rng: fastrand::Rng,
     pub primitive_manager: primitives::PrimitiveManager,
     pub camera: camera::RenderCamera,
     mouse_pressed: bool,
+    total_time: std::time::Duration,
+    spawn_data: SpawnData,
 }
 
 impl LevelManager {
@@ -38,6 +78,7 @@ impl LevelManager {
         device: &Device,
         size: PhysicalSize<u32>,
     ) -> (Self, ShaderModule, PipelineLayout) {
+        assert!(hardness >= 0.0 && hardness <= 1.0);
         let rng = fastrand::Rng::with_seed(seed);
         let primitive_manager = primitives::PrimitiveManager::new(&device, PRIMITIVE_COUNT);
         let camera = camera::RenderCamera::new(&device, size);
@@ -55,10 +96,12 @@ impl LevelManager {
         (
             Self {
                 hardness,
-                rng,
                 primitive_manager,
                 camera,
                 mouse_pressed: false,
+                total_time: std::time::Duration::from_secs(0),
+                spawn_data: SpawnData::new(rng.clone()),
+                rng,
             },
             shader,
             render_pipeline_layout,
@@ -66,6 +109,7 @@ impl LevelManager {
     }
 
     pub fn start(&mut self, queue: &wgpu::Queue) {
+        self.total_time = std::time::Duration::from_secs(0);
         let params = &RespawnParams {
             hardness: &self.hardness,
             rng: &self.rng,
@@ -73,7 +117,9 @@ impl LevelManager {
         self.primitive_manager.update_primitives(
             |primitives| {
                 for primitive in primitives.iter_mut() {
-                    respawn_primitive(params, primitive);
+                    if self.rng.f32() < self.hardness {
+                        respawn_primitive(params, primitive);
+                    }
                 }
             },
             queue,
@@ -84,8 +130,19 @@ impl LevelManager {
         self.camera.resize(size.width, size.height);
     }
     pub fn update(&mut self, dt: std::time::Duration, queue: &wgpu::Queue) {
+        self.total_time += dt;
         self.primitive_manager.update(dt, queue);
         self.camera.update(dt, queue);
+        if self.spawn_data.should_spawn(dt, self.hardness) {
+            if let Some(ref mut primitive) = self.primitive_manager.get_spawnable_primitive() {
+                let params = &RespawnParams {
+                    hardness: &self.hardness,
+                    rng: &self.rng,
+                };
+                respawn_primitive(params, primitive);
+                self.spawn_data.did_spawn();
+            }
+        }
     }
 
     pub(crate) fn input(&mut self, input: &Input) -> bool {
@@ -144,8 +201,8 @@ struct RespawnParams<'a> {
 fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     let rng = params.rng;
     let hardness = *params.hardness;
-    primitive.data = x4!(hardness_to_scale(hardness,rng.f32()));
-    primitive.speed = hardness_to_speed(hardness,rng.f32());
+    primitive.data = x4!(hardness_to_scale(hardness, rng.f32()));
+    primitive.speed = hardness_to_speed(hardness, rng.f32());
     primitive.place_in_spawn_area(rng);
     primitive.rgba = x4!(rng.f32());
     //these integers are not in line with the ones used for enum representation, but that doenst matter here
@@ -155,35 +212,37 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
         }
         1 => {
             primitive.typus = Typus::BoxFrame;
-            primitive.data[3] /= 10.0 ;
+            primitive.data[3] /= 10.0;
         }
         _ => {}
     };
 }
 
-fn hardness_to_speed(hardness: f32, random: f32) -> f32 {
-    const MIN_SPEED: f32 = 5.0;
-    const MAX_SPEED: f32 = 30.0;
 
+const MIN_SPEED: f32 = VIEW_DST / 20.0;
+const MAX_SPEED: f32 = VIEW_DST / 2.0;
+
+const MIN_SCALE: f32 = VIEW_DST / 20.0;
+const MAX_SCALE: f32 = VIEW_DST / 10.0 * 8.0;
+
+const MIN_X: f32 = -VIEW_DST;
+const MAX_X: f32 = VIEW_DST;
+const MIN_Y: f32 = -VIEW_DST;
+const MAX_Y: f32 = VIEW_DST;
+const MIN_Z: f32 = VIEW_DST + MAX_SCALE;
+const MAX_Z: f32 = VIEW_DST + MAX_SCALE + 100.0;
+
+
+fn hardness_to_speed(hardness: f32, random: f32) -> f32 {
     MIN_SPEED + hardness * random * (MAX_SPEED - MIN_SPEED)
 }
 
 fn hardness_to_scale(hardness: f32, random: f32) -> f32 {
-    const MIN_SCALE: f32 = 5.0;
-    const MAX_SCALE: f32 = 50.0;
-
     MIN_SCALE + hardness * random * (MAX_SCALE - MIN_SCALE)
 }
 
 impl SDFPrimitive {
     fn place_in_spawn_area(&mut self, rng: &fastrand::Rng) {
-        const MIN_X : f32 = -1000.0;
-        const MAX_X : f32 = 1000.0;
-        const MIN_Y : f32 = -1000.0;
-        const MAX_Y : f32 = 1000.0;
-        const MIN_Z : f32 = 1000.0;
-        const MAX_Z : f32 = 1100.0;
-
         self.position = [
             rng.f32() * (MAX_X - MIN_X) + MIN_X,
             rng.f32() * (MAX_Y - MIN_Y) + MIN_Y,

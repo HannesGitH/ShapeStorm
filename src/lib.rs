@@ -36,7 +36,7 @@ struct State {
 
 impl State {
     // Creating some of the wgpu types requires async code
-    async fn new(window: Window) -> Self {
+    async fn new(window: Window) -> State {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU
@@ -87,7 +87,7 @@ impl State {
 
         let randomseed = fastrand::u64(..); //wenn es n levelsystem gibt vorher setten, klar
         let (mut levelman, shader, render_pipeline_layout) =
-            level::LevelManager::new(0.5, randomseed, &device, size);
+            level::LevelManager::new(0.2, randomseed, &device, size);
         levelman.start(&queue);
 
         let scene = CurrentScene::Level(levelman);
