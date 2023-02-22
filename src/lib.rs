@@ -16,6 +16,7 @@ use winit::window::Window;
 
 enum CurrentScene {
     Level(level::SingleLevelManager),
+    GameOver,
     // Menu,
 }
 
@@ -186,6 +187,7 @@ impl State {
                 CurrentScene::Level(ref mut single_level_manager) => {
                     single_level_manager.resize(new_size);
                 }
+                _ => {}
             }
         }
     }
@@ -193,6 +195,7 @@ impl State {
     fn input(&mut self, input: Input) -> bool {
         if match &mut self.scene {
             CurrentScene::Level(single_level_manager) => single_level_manager.input(&input),
+            CurrentScene::GameOver => false,//TODO: handleinputs in game over screen
         } {
             return true;
         }
@@ -216,7 +219,11 @@ impl State {
         match &mut self.scene {
             CurrentScene::Level(single_level_manager) => {
                 single_level_manager.update(dt, &self.queue);
+                if single_level_manager.game_over {
+                    self.scene = CurrentScene::GameOver;
+                }
             }
+            CurrentScene::GameOver => {},
         }
     }
 
@@ -250,6 +257,9 @@ impl State {
                     render_pass.set_bind_group(1, &single_level_manager.camera.bind_group, &[]);
                     render_pass.set_bind_group(0, &single_level_manager.primitive_manager.bind_group, &[]);
                 }
+                CurrentScene::GameOver => {
+                    //TODO: render game over screen
+                },
             }
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.

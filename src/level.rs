@@ -13,6 +13,8 @@ use crate::{
     x4, Input, x3,
 };
 
+use self::distance::get_min_dst_to_primitives;
+
 mod distance;
 
 const VIEW_DST: f32 = 1000.0;
@@ -72,6 +74,7 @@ pub(crate) struct SingleLevelManager {
     mouse_pressed: bool,
     total_time: std::time::Duration,
     spawn_data: SpawnData,
+    pub game_over: bool,
 }
 
 impl SingleLevelManager {
@@ -105,6 +108,7 @@ impl SingleLevelManager {
                 total_time: std::time::Duration::from_secs(0),
                 spawn_data: SpawnData::new(rng.clone()),
                 rng,
+                game_over: false,
             },
             shader,
             render_pipeline_layout,
@@ -145,6 +149,10 @@ impl SingleLevelManager {
                 respawn_primitive(params, primitive);
                 self.spawn_data.did_spawn();
             }
+        };
+        let dst = get_min_dst_to_primitives(self.camera.camera.position.into(), &self.primitive_manager.primitives);
+        if dst < 1.0 {
+            self.game_over = true;
         }
     }
 

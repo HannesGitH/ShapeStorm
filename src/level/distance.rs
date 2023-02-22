@@ -1,10 +1,24 @@
 use cgmath::{
-    dot, num_traits::clamp, BaseFloat, ElementWise, InnerSpace, Quaternion, Rad, Rotation, Vector2,
-    Vector3, Vector4,
+     BaseFloat, ElementWise, InnerSpace, Quaternion, Rotation, Vector2,
+    Vector3,  Point3,
 };
 use winit::dpi::Pixel;
 
 use crate::primitives::{SDFPrimitive, Typus};
+
+pub fn get_min_dst_to_primitives(
+    from_point: Point3<f32>,
+    primitives: &Vec<SDFPrimitive>,
+) -> f32 {
+    let mut min_dst = 100000.0;
+    for primitive in primitives {
+        let dst = distance_to_primitive(Vector3::new(from_point.x, from_point.y, from_point.z), *primitive);
+        if dst < min_dst {
+            min_dst = dst;
+        }
+    }
+    min_dst
+}
 
 fn distance_to_primitive(from_point: Vector3<f32>, primitive: SDFPrimitive) -> f32 {
     let infinite_repition_period = Vector2::new(1000.0, 1000.0);
@@ -39,7 +53,7 @@ fn distance_to_primitive(from_point: Vector3<f32>, primitive: SDFPrimitive) -> f
         primitive.instances[2].cast(),
     );
     let instanced_point: Vector3<f32> =
-        q - primitive.instances_distance * clamp_element_wise(dis, zero_vec3 - bound, bound);
+        q - primitive.instances_distance * clamp_element_wise(dis, ZERO_VEC3 - bound, bound);
     //// dst = distance_to_box_frame(relative_point_q, primitive.data);
     q = instanced_point;
     match primitive.typus {
@@ -47,31 +61,30 @@ fn distance_to_primitive(from_point: Vector3<f32>, primitive: SDFPrimitive) -> f
         Typus::Ellipsoid => distance_to_ellipsoid(q, primitive.data),
         Typus::Octahedron => distance_to_octahedron(q, primitive.data),
         Typus::ChainLink => distance_to_chain_link(q, primitive.data),
-        _ => 100000.0,
     }
 }
 
-const zero_vec3: Vector3<f32> = Vector3::new(0.0, 0.0, 0.0);
+const ZERO_VEC3: Vector3<f32> = Vector3::new(0.0, 0.0, 0.0);
 fn distance_to_box_frame(from_point: Vector3<f32>, box_data: [f32; 4]) -> f32 {
     let box_size = Vector3::new(box_data[0], box_data[1], box_data[2]);
     let frame_girth = vec3_from(box_data[3]);
     let p = abs(from_point) - box_size;
     let q: Vector3<f32> = abs(p + frame_girth) - frame_girth;
     return Vector3::new(p.x, q.y, q.z)
-        .max_element_wise(zero_vec3)
+        .max_element_wise(ZERO_VEC3)
         .magnitude()
         + p.x
             .max(q.y.max(q.z))
             .min(0.0)
             .min(
                 Vector3::new(q.x, p.y, q.z)
-                    .max_element_wise(zero_vec3)
+                    .max_element_wise(ZERO_VEC3)
                     .magnitude()
                     + q.x.max(p.y.max(q.z)).min(0.0),
             )
             .min(
                 Vector3::new(q.x, q.y, p.z)
-                    .max_element_wise(zero_vec3)
+                    .max_element_wise(ZERO_VEC3)
                     .magnitude()
                     + q.x.max(q.y.max(p.z)).min(0.0),
             );
@@ -91,11 +104,11 @@ fn distance_to_ellipsoid(from_point: Vector3<f32>, sphere_data: [f32; 4]) -> f32
     return k0 * (k0 - 1.0) / k1;
 }
 
-const sqrt_third: f32 = 0.57735026918962576450914878050196; //thanks copilot
+const SQRT_THIRD: f32 = 0.57735026918962576450914878050196; //thanks copilot
 fn distance_to_octahedron(from_point: Vector3<f32>, octa_data: [f32; 4]) -> f32 {
     let octa_size = octa_data[0];
     let p: Vector3<f32> = abs(from_point);
-    return (p.x + p.y + p.z - octa_size) * sqrt_third;
+    return (p.x + p.y + p.z - octa_size) * SQRT_THIRD;
 }
 
 fn distance_to_chain_link(from_point: Vector3<f32>, chain_data: [f32; 4]) -> f32 {
