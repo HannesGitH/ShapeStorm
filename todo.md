@@ -1,7 +1,7 @@
 # TODOs
 
 - [ ] items (green blinking spheres) make special stuff like
-  - smaller/thinner hindernisse
+  - smaller/thinner obstacles
   - slower time
   - more points
   - more time

@@ -40,7 +40,7 @@ impl Default for Typus {
 }
 
 // #[repr(C , align(16))]
-// the paddings allow aliognment of 16bytes for my actual variables
+// the paddings allow alignment of 16bytes for my actual variables
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SDFPrimitive {

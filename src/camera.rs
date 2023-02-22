@@ -331,7 +331,7 @@ impl RenderCamera {
             bind_group_layout,
         }
     }
-    fn update_conroller(&mut self, dt: Duration) {
+    fn update_controller(&mut self, dt: Duration) {
         self.controller.update_camera(&mut self.camera, dt);
     }
     fn update_uniform(&mut self, queue: &Queue) {
@@ -339,7 +339,7 @@ impl RenderCamera {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.uniform]));
     }
     pub fn update(&mut self, dt: Duration, queue: &Queue) {
-        self.update_conroller(dt);
+        self.update_controller(dt);
         self.update_uniform(queue);
     }
     pub fn resize(&mut self, width: u32, height: u32) {

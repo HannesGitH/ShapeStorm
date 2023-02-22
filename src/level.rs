@@ -61,7 +61,7 @@ impl SpawnData {
 //     len: 20.0,
 // };
 
-pub(crate) struct LevelManager {
+pub(crate) struct SingleLevelManager {
     /// 0.0 - 1.0
     hardness: f32,
     rng: fastrand::Rng,
@@ -72,7 +72,7 @@ pub(crate) struct LevelManager {
     spawn_data: SpawnData,
 }
 
-impl LevelManager {
+impl SingleLevelManager {
     pub fn new(
         hardness: f32,
         seed: u64,
@@ -226,7 +226,7 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     };
     primitive.instances = x3!(triple_this_axis());
     primitive.instances_distance = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b))*3.5;
-    //these integers are not in line with the ones used for enum representation, but that doenst matter here
+    //these integers are not in line with the ones used for enum representation, but that doesn't matter here
     match rng.u32(..=Typus::MAX_VALUE) {
         0 => {
             primitive.typus = Typus::Ellipsoid;

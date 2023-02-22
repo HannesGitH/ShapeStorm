@@ -1,0 +1,14 @@
+{
+    "cSpell.words": [
+        "bytemuck",
+        "cgmath",
+        "fastrand",
+        "fovy",
+        "multiview",
+        "Typus",
+        "Vulkan",
+        "winit",
+        "zfar",
+        "znear"
+    ]
+}

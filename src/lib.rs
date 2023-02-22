@@ -15,7 +15,7 @@ use winit::{
 use winit::window::Window;
 
 enum CurrentScene {
-    Level(level::LevelManager),
+    Level(level::SingleLevelManager),
     // Menu,
 }
 
@@ -85,12 +85,12 @@ impl State {
         };
         surface.configure(&device, &config);
 
-        let randomseed = fastrand::u64(..); //wenn es n levelsystem gibt vorher setten, klar
-        let (mut levelman, shader, render_pipeline_layout) =
-            level::LevelManager::new(0.2, randomseed, &device, size);
-        levelman.start(&queue);
+        let random_seed = fastrand::u64(..); //XXX: set according to level (from level-system)
+        let (mut single_level_manager, shader, render_pipeline_layout) =
+            level::SingleLevelManager::new(0.2, random_seed, &device, size);
+        single_level_manager.start(&queue);
 
-        let scene = CurrentScene::Level(levelman);
+        let scene = CurrentScene::Level(single_level_manager);
 
         //XXX: put that in the level man or a state match block?
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -183,8 +183,8 @@ impl State {
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
             match &mut self.scene {
-                CurrentScene::Level(ref mut levelman) => {
-                    levelman.resize(new_size);
+                CurrentScene::Level(ref mut single_level_manager) => {
+                    single_level_manager.resize(new_size);
                 }
             }
         }
@@ -192,7 +192,7 @@ impl State {
 
     fn input(&mut self, input: Input) -> bool {
         if match &mut self.scene {
-            CurrentScene::Level(levelman) => levelman.input(&input),
+            CurrentScene::Level(single_level_manager) => single_level_manager.input(&input),
         } {
             return true;
         }
@@ -214,8 +214,8 @@ impl State {
 
     fn update(&mut self, dt: Duration) {
         match &mut self.scene {
-            CurrentScene::Level(levelman) => {
-                levelman.update(dt, &self.queue);
+            CurrentScene::Level(single_level_manager) => {
+                single_level_manager.update(dt, &self.queue);
             }
         }
     }
@@ -246,9 +246,9 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             match &mut self.scene {
-                CurrentScene::Level(levelman) => {
-                    render_pass.set_bind_group(1, &levelman.camera.bind_group, &[]);
-                    render_pass.set_bind_group(0, &levelman.primitive_manager.bind_group, &[]);
+                CurrentScene::Level(single_level_manager) => {
+                    render_pass.set_bind_group(1, &single_level_manager.camera.bind_group, &[]);
+                    render_pass.set_bind_group(0, &single_level_manager.primitive_manager.bind_group, &[]);
                 }
             }
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
