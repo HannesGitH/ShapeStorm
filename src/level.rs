@@ -83,7 +83,7 @@ impl LevelManager {
         let rng = fastrand::Rng::with_seed(seed);
         let primitive_manager = primitives::PrimitiveManager::new(&device, PRIMITIVE_COUNT);
         let camera = camera::RenderCamera::new(&device, size, VIEW_DST);
-        let shader = device.create_shader_module(wgpu::include_wgsl!("level.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("level/main_shader.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
@@ -205,12 +205,12 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
     primitive.data = x4!(hardness_to_scale(hardness, rng.f32()));
     primitive.speed = hardness_to_speed(hardness, rng.f32());
     let (u, v, w) = (rng.f32(), rng.f32(), rng.f32());
-    let π = std::f32::consts::PI;
+    let pi = std::f32::consts::PI;//∏
     primitive.rotation = [
-        (1.0 - u).sqrt() * (2.0 * π * v).sin(),
-        (1.0 - u).sqrt() * (2.0 * π * v).cos(),
-        (u).sqrt() * (2.0 * π * w).sin(),
-        (u).sqrt() * (2.0 * π * w).cos(),
+        (1.0 - u).sqrt() * (2.0 * pi * v).sin(),
+        (1.0 - u).sqrt() * (2.0 * pi * v).cos(),
+        (u).sqrt() * (2.0 * pi * w).sin(),
+        (u).sqrt() * (2.0 * pi * w).cos(),
     ];
     let rand_rot = || 0.1 * hardness * rng.f32();
     primitive.rotation_delta = Quaternion::from_arc(
