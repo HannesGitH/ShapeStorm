@@ -25,6 +25,7 @@ pub enum Effect {
     GlowOff,
     CleanFromWater,
     BlackBody,
+    WhiteBody,
     // HalfStep,
 }
 // unsafe impl bytemuck::Contiguous for Effect {
@@ -255,6 +256,9 @@ impl CameraUniform {
             screen_to_world: cgmath::Matrix4::identity().into(),
             pixel_normalization_matrix: cgmath::Matrix4::identity().into(),
             // effect : Effect::CleanFromWater,
+            // effect : Effect::GlowOff,
+            // effect : Effect::WhiteBody,
+            // effect : Effect::GlassyOnion,
             ..Default::default()
         }
     }

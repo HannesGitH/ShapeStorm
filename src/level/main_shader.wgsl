@@ -100,26 +100,27 @@ fn march(ray: Ray) -> MarchOutput {
     var color = vec4<f32>(.0);
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let out = calc_step(ray.origin + ray.direction * dst);
-        // if (camera.effect == 2u) {
-        //     dst = dst + out.distance/2.0;
-        // }else{
-        //     dst = dst + out.distance;
-        // }
         dst = dst + out.distance;
         if (out.distance < epsilon) {
             steps = i;
             // color = out.color;
             if (camera.effect == 4u) { //4u = black-body
                 color = vec4<f32>(0.0);
-            } else {
+            } else if (camera.effect == 5u) { //3u = white-body
                 color = vec4<f32>(1.0);
+            } else { //shattered glass looking default shader
+                color = color * (max_distance - dst) / max_distance;
             }
             break;
         }
         if (camera.effect != 2u) { //2u = glow-off
-            color = color + out.color / color_damper;
+            if (camera.effect == 5u) {
+                color = color + out.color / color_damper;
+            } else {
+                color = color + out.color * (max_distance - dst) / max_distance / color_damper;
+            }
+            // color = color 
         }
-        color = color + out.color / color_damper;
         if (dst > max_distance) {
             steps = i;
             if (camera.effect == 1u) { //1u = glassy-onion
