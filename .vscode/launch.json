@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'egui_demo_app'",
+            "name": "Debug executable 'wgpu-learn'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=egui_demo_app",
-                    "--package=egui_demo_app"
+                    "--bin=wgpu-learn",
+                    "--package=wgpu-learn"
                 ],
                 "filter": {
-                    "name": "egui_demo_app",
+                    "name": "wgpu-learn",
                     "kind": "bin"
                 }
             },
@@ -25,35 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'egui_demo_app'",
+            "name": "Debug unit tests in executable 'wgpu-learn'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--lib",
-                    "--package=egui_demo_app"
+                    "--bin=wgpu-learn",
+                    "--package=wgpu-learn"
                 ],
                 "filter": {
-                    "name": "egui_demo_app",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'egui_demo_app'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=egui_demo_app",
-                    "--package=egui_demo_app"
-                ],
-                "filter": {
-                    "name": "egui_demo_app",
+                    "name": "wgpu-learn",
                     "kind": "bin"
                 }
             },
