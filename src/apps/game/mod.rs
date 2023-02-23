@@ -1,4 +1,4 @@
-use std::{num::NonZeroU64, sync::Arc, time::Duration};
+use std::{num::NonZeroU64, sync::Arc, time::{Duration, Instant}};
 
 use eframe::{
     egui_wgpu::wgpu::util::DeviceExt,
@@ -27,6 +27,7 @@ pub(crate) struct State {
     // render_pipeline: wgpu::RenderPipeline,
     mouse_pressed: bool,
     scene: CurrentScene,
+    last_time: Option<Instant>,
 }
 
 impl State {
@@ -113,23 +114,24 @@ impl State {
             // diffuse_texture,
             mouse_pressed: false,
             scene,
+            last_time: None,
         })
     }
 
-    // pub fn resize(&mut self, new_size: (u32, u32)) {
-    //     if new_size.0 > 0 && new_size.1 > 0 {
-    //         self.size = new_size;
-    //         self.config.width = new_size.0;
-    //         self.config.height = new_size.1;
-    //         self.surface.configure(&self.device, &self.config);
-    //         match &mut self.scene {
-    //             CurrentScene::Level(ref mut single_level_manager) => {
-    //                 single_level_manager.resize(new_size);
-    //             }
-    //             _ => {}
-    //         }
-    //     }
-    // }
+    pub fn resize(&mut self, new_size: (u32, u32)) {
+        if new_size.0 > 0 && new_size.1 > 0 {
+            self.size = new_size;
+            // self.config.width = new_size.0;
+            // self.config.height = new_size.1;
+            // self.surface.configure(&self.device, &self.config);
+            match &mut self.scene {
+                CurrentScene::Level(ref mut single_level_manager) => {
+                    single_level_manager.resize(new_size);
+                }
+                _ => {}
+            }
+        }
+    }
 
     // fn input(&mut self, input: Input) -> bool {
     //     if match &mut self.scene {
@@ -154,7 +156,11 @@ impl State {
     //     }
     // }
 
-    fn update(&mut self, dt: Duration) {
+    fn update(&mut self) {
+        let now = Instant::now();
+        let dt = if let Some(lt)=self.last_time{
+            now.duration_since(lt)}else{Duration::from_secs(0)};
+        self.last_time = Some(now);
         match &mut self.scene {
             CurrentScene::Level(single_level_manager) => {
                 single_level_manager.update(dt, &self.queue);
@@ -169,24 +175,11 @@ impl State {
 
 impl eframe::App for State {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.update(Duration::from_secs_f64(1.0 / 60.0));
+        self.update();
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::both()
-                .auto_shrink([false; 2])
-                .show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.spacing_mut().item_spacing.x = 0.0;
-                        ui.label("The triangle is being painted using ");
-                        ui.hyperlink_to("WGPU", "https://wgpu.rs");
-                        ui.label(" (Portable Rust graphics API awesomeness)");
-                    });
-                    ui.label("It's not a very impressive demo, but it shows you can embed 3D inside of egui.");
-
-                    egui::Frame::canvas(ui.style()).show(ui, |ui| {
-                        self.custom_painting(ui);
-                    });
-                    ui.label("Drag to rotate!");
-                });
+            egui::Frame::canvas(ui.style()).show(ui, |ui| {
+                self.custom_painting(ui);
+            });
         });
     }
 }
@@ -198,6 +191,7 @@ impl State {
 
         // let angle += response.drag_delta().x * 0.01;
 
+        self.resize((rect.width() as u32, rect.height() as u32));
         // let time_delta = response.ctx
 
         match &mut self.scene {

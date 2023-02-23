@@ -17,10 +17,11 @@
 - [ ] vr?
 - [ ] ui
   - [x] egui
-    - [ ] correct resizing
-    - [ ] correct scaling
+    - [x] correct resizing
+    - [x] correct scaling
     - [ ] handle input
-    - [ ] update with correct dt (not fixed 1/60s)
+    - [x] update with correct dt (not fixed 1/60s)
+      - curerntly uses Instant::now(), something provided by egui might be better..
   - [ ] menu
   - [ ] pause
   - [ ] game over

@@ -178,10 +178,10 @@ impl CameraController {
     //     }
     // }
 
-    pub fn process_mouse(&mut self, _mouse_dx: f64,_mouse_dyy: f64) {
-        // self.rotate_horizontal = mouse_dx as f32;
-        // self.rotate_vertical = mouse_dy as f32;
-    }
+    // pub fn process_mouse(&mut self, _mouse_dx: f64,_mouse_dyy: f64) {
+    //     // self.rotate_horizontal = mouse_dx as f32;
+    //     // self.rotate_vertical = mouse_dy as f32;
+    // }
 
     // pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
     //     self.scroll = match delta {
