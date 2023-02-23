@@ -7,6 +7,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'egui_demo_app'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=egui_demo_app",
+                    "--package=egui_demo_app"
+                ],
+                "filter": {
+                    "name": "egui_demo_app",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'egui_demo_app'",
             "cargo": {
                 "args": [
@@ -18,24 +36,6 @@
                 "filter": {
                     "name": "egui_demo_app",
                     "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'egui_demo_app'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=egui_demo_app",
-                    "--package=egui_demo_app"
-                ],
-                "filter": {
-                    "name": "egui_demo_app",
-                    "kind": "bin"
                 }
             },
             "args": [],
