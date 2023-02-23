@@ -47,7 +47,7 @@ impl State {
         let size: (u32, u32) = (size_vec2.x as u32, size_vec2.y as u32);
 
         let random_seed = fastrand::u64(..); //XXX: set according to level (from level-system)
-        let (mut single_level_manager, shader, render_pipeline_layout) =
+        let (mut single_level_manager, shader, render_pipeline_layout, bind_groups) =
             level::SingleLevelManager::new(0.7, random_seed, &device, size);
         single_level_manager.start(&queue);
 
@@ -96,8 +96,7 @@ impl State {
         .paint_callback_resources
         .insert(GameRendering {
             render_pipeline,
-            camera_bind_group: single_level_manager.camera.bind_group,
-            primitives_bind_group: single_level_manager.primitive_manager.bind_group,
+            bind_groups,
             // diffuse_bind_group,
             // diffuse_texture,
         });
@@ -240,10 +239,13 @@ impl State {
     }
 }
 
-struct GameRendering {
-    render_pipeline: wgpu::RenderPipeline,
+pub(crate) struct BindGroups {
     camera_bind_group: wgpu::BindGroup,
     primitives_bind_group: wgpu::BindGroup,
+}
+struct GameRendering {
+    render_pipeline: wgpu::RenderPipeline,
+    bind_groups: BindGroups,
 }
 
 impl GameRendering {
@@ -251,8 +253,8 @@ impl GameRendering {
         render_pass.set_pipeline(&self.render_pipeline);
         // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
 
-        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-        render_pass.set_bind_group(0, &self.primitives_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.bind_groups.camera_bind_group, &[]);
+        render_pass.set_bind_group(0, &self.bind_groups.primitives_bind_group, &[]);
 
         // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.

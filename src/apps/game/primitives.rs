@@ -70,25 +70,25 @@ impl SDFPrimitive {
 pub struct PrimitiveManager {
     pub primitives: Vec<SDFPrimitive>,
     pub buffer: Buffer,
-    pub bind_group: BindGroup,
+    // pub bind_group: BindGroup,
     pub bind_group_layout: BindGroupLayout,
     // total_time: Duration,
 }
 
 impl PrimitiveManager {
-    pub fn new(device: &Device, primitive_count: u8) -> Self {
+    pub fn new(device: &Device, primitive_count: u8) -> (Self, BindGroup) {
         let (bind_group, bind_group_layout, buffer) =
             mk_primitive_bind_group(device, primitive_count);
 
         let primitives = vec![SDFPrimitive::new(); primitive_count as usize];
 
-        Self {
+        (Self {
             primitives: primitives,
             buffer,
-            bind_group,
+            // bind_group,
             bind_group_layout,
             // total_time: Duration::from_secs(0),
-        }
+        }, bind_group)
     }
     pub fn update_primitives<F>(&mut self, primitive_updater: F, queue: &wgpu::Queue)
     where

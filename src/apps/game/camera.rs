@@ -286,12 +286,12 @@ pub struct RenderCamera {
     pub controller: CameraController,
     pub uniform: CameraUniform,
     pub buffer: wgpu::Buffer,
-    pub bind_group: wgpu::BindGroup,
+    // pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RenderCamera {
-    pub fn new(device : &Device, size: (u32,u32), far:f32)->Self{
+    pub fn new(device : &Device, size: (u32,u32), far:f32)->(Self, wgpu::BindGroup){
 
         let camera = Camera::new((0.0, 0.0, 0.0), cgmath::Deg(90.0), cgmath::Deg(0.0));
         let projection =
@@ -328,15 +328,15 @@ impl RenderCamera {
             }],
             label: Some("camera_bind_group"),
         });
-        Self{
+        (Self{
             camera,
             projection,
             controller,
             uniform,
             buffer,
-            bind_group,
+            // bind_group,
             bind_group_layout,
-        }
+        }, bind_group)
     }
     fn update_controller(&mut self, dt: Duration) {
         self.controller.update_camera(&mut self.camera, dt);

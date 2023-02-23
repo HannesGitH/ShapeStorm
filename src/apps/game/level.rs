@@ -1,6 +1,7 @@
 use bytemuck::Contiguous;
 use cgmath::{Quaternion, Vector3};
 use fastrand;
+use super::BindGroups;
 use super::wgpu::{self, Device, PipelineLayout, ShaderModule};
 
 use super::{
@@ -81,11 +82,11 @@ impl SingleLevelManager {
         seed: u64,
         device: &Device,
         size: (u32, u32),
-    ) -> (Self, ShaderModule, PipelineLayout) {
+    ) -> (Self, ShaderModule, PipelineLayout, BindGroups) {
         assert!(hardness >= 0.0 && hardness <= 1.0);
         let rng = fastrand::Rng::with_seed(seed);
-        let primitive_manager = primitives::PrimitiveManager::new(&device, PRIMITIVE_COUNT);
-        let camera = camera::RenderCamera::new(device, size, VIEW_DST);
+        let (primitive_manager, primitives_bind_group) = primitives::PrimitiveManager::new(&device, PRIMITIVE_COUNT);
+        let (camera, camera_bind_group) = camera::RenderCamera::new(device, size, VIEW_DST);
         let shader = device.create_shader_module(wgpu::include_wgsl!("level/main_shader.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -110,6 +111,10 @@ impl SingleLevelManager {
             },
             shader,
             render_pipeline_layout,
+            BindGroups {
+                primitives_bind_group,
+                camera_bind_group,
+            },
         )
     }
 
