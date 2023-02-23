@@ -37,7 +37,8 @@ var<uniform> camera: CameraUniform;
 
 // Vertex shader
 struct VertexInput {
-    @location(0) position: vec3<f32>,
+    // @location(0) position: vec3<f32>,
+    @builtin(vertex_index) v_idx: u32
     // @location(1) tex_coords: vec2<f32>,
 }
 
@@ -45,6 +46,16 @@ struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     // @location(0) tex_coords: vec2<f32>,
 }
+
+var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
+    vec2<f32>(-1.0, -1.0),
+    vec2<f32>(-1.0, 1.0),
+    vec2<f32>(1.0, 1.0),
+    vec2<f32>(1.0, -1.0),
+);
+
+
+var<private> indices: array<u32,6> = array<u32, 6>(2u, 1u, 0u, 3u, 2u, 0u);
 
 @vertex
 fn vs_main(
@@ -54,7 +65,7 @@ fn vs_main(
     // out.tex_coords = model.tex_coords;
     out.clip_position = 
     // camera.world_to_screen * 
-    vec4<f32>(model.position, 1.0);
+    vec4<f32>(v_positions[indices[model.v_idx]], 0.0, 1.0);
     return out;
 }
 
@@ -78,6 +89,7 @@ fn fs_main(
     let out = march(ray);
     // // return vec4<f32>(f32(out.steps)/32.0, vec3<f32>(1.0));
     return vec4<f32>(out.color.xyz , 1.0);
+    // return vec4<f32>(1.0);
 }
 
 // ray marching

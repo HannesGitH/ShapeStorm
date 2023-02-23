@@ -91,15 +91,15 @@ impl State {
         });
 
         wgpu_render_state
-        .renderer
-        .write()
-        .paint_callback_resources
-        .insert(GameRendering {
-            render_pipeline,
-            bind_groups,
-            // diffuse_bind_group,
-            // diffuse_texture,
-        });
+            .renderer
+            .write()
+            .paint_callback_resources
+            .insert(GameRendering {
+                render_pipeline,
+                bind_groups,
+                // diffuse_bind_group,
+                // diffuse_texture,
+            });
 
         Some(Self {
             // surface,
@@ -169,6 +169,7 @@ impl State {
 
 impl eframe::App for State {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.update(Duration::from_secs_f64(1.0 / 60.0));
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::both()
                 .auto_shrink([false; 2])
@@ -193,7 +194,7 @@ impl eframe::App for State {
 impl State {
     fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) =
-            ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
+            ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
         // let angle += response.drag_delta().x * 0.01;
 
@@ -258,7 +259,7 @@ impl GameRendering {
 
         // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.
-        render_pass.draw_indexed(0..(INDICES.len() as u32), 0, 0..1);
+        render_pass.draw(0..6, 0..1);
     }
 }
 

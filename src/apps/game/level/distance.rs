@@ -15,9 +15,9 @@ pub fn get_min_dst_to_primitives(
     let mut closest = 0usize;
     let point = Vector3::new(from_point[0]-500.0, from_point[1]-500.0, from_point[2]);
     for (i, primitive) in primitives.iter_mut().enumerate() {
-        primitive.data = crate::x4!(100.0);
-        primitive.typus = Typus::Ellipsoid;
-        primitive.rgba = [0.0,1.0,0.0,1.0];
+        // primitive.data = crate::x4!(100.0);
+        // primitive.typus = Typus::Ellipsoid;
+        // primitive.rgba = [0.0,1.0,0.0,1.0];
         
         // if i == 0 {
         //     primitive.rgba = [0.0,0.0,1.0,1.0];
