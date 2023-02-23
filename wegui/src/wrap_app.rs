@@ -23,6 +23,9 @@ pub struct WrapApp {
     #[cfg(any(feature = "glow", feature = "wgpu"))]
     custom3d: Option<crate::apps::Custom3d>,
 
+    #[cfg(feature = "wgpu")]
+    game: Option<crate::apps::game::singlelevel::Custom3d>,
+
     dropped_files: Vec<egui::DroppedFile>,
 }
 
@@ -34,6 +37,9 @@ impl WrapApp {
 
             #[cfg(any(feature = "glow", feature = "wgpu"))]
             custom3d: crate::apps::Custom3d::new(_cc),
+
+            #[cfg(feature = "wgpu")]
+            game: crate::apps::game::singlelevel::Custom3d::new(_cc),
 
             dropped_files: Default::default(),
         };
@@ -64,6 +70,15 @@ impl WrapApp {
                 "🔺 3D painting",
                 "custom3d",
                 custom3d as &mut dyn eframe::App,
+            ));
+        }
+
+        #[cfg(feature = "wgpu")]
+        if let Some(game) = &mut self.game {
+            vec.push((
+                "✳️ ray marcher",
+                "marcher",
+                game as &mut dyn eframe::App,
             ));
         }
 

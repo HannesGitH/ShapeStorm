@@ -2,7 +2,7 @@
 
 CRATE_NAME="egui_demo_app"
  # NOTE: persistence use up about 400kB (10%) of the WASM!
-FEATURES="glow,http,persistence,web_screen_reader"
+FEATURES="wgpu,http,persistence,web_screen_reader"
 
 OPEN=false
 OPTIMIZE=false
@@ -94,3 +94,5 @@ if [[ "${OPEN}" == true ]]; then
     open http://localhost:8888/index.html
   fi
 fi
+
+#TODO build other targets (cargo apk?)

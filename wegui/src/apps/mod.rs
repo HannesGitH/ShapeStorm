@@ -4,6 +4,8 @@ mod custom3d_glow;
 #[cfg(feature = "wgpu")]
 mod custom3d_wgpu;
 
+#[cfg(feature = "wgpu")]
+pub mod game;
 
 #[cfg(feature = "http")]
 mod http_app;
