@@ -1,9 +1,6 @@
 [package]
 name = "egui_demo_app"
 version = "0.21.0"
-authors = ["Emil Ernerfeldt <emil.ernerfeldt@gmail.com>"]
-license = "MIT OR Apache-2.0"
-edition = "2021"
 rust-version = "1.65"
 publish = false
 default-run = "egui_demo_app"
@@ -48,16 +45,15 @@ poll-promise = { version = "0.2", optional = true, default-features = false }
 # feature "persistence":
 serde = { version = "1", optional = true, features = ["derive"] }
 
-anyhow = "1.0.68"
-bytemuck = { version = "1.13", features = [ "derive" ] }
-env_logger = "0.10.0"
-image = "0.24.5"
-log = "0.4.17"
-pollster = "0.2.5"
-wgpu = "0.15.1"
-winit = "0.27.5"
-cgmath = "0.18"
-fastrand = "1.9.0"
+# anyhow = "1.0.68"
+# # bytemuck = { version = "1.13", features = [ "derive" ], optional = true }
+# env_logger = "0.10.0"
+# log = "0.4.17"
+# pollster = "0.2.5"
+# wgpu = "0.15.1"
+# winit = "0.27.5"
+# cgmath = "0.18"
+# fastrand = "1.9.0"˚
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
