@@ -1,4 +1,4 @@
-use std::{num::NonZeroU64, sync::Arc};
+use std::{num::NonZeroU64, sync::Arc, time::Duration};
 
 use eframe::{
     egui_wgpu::wgpu::util::DeviceExt,
@@ -8,8 +8,8 @@ use egui::Window;
 
 mod camera;
 mod level;
-mod primitives;
 mod macros;
+mod primitives;
 
 enum CurrentScene {
     Level(level::SingleLevelManager),
@@ -17,109 +17,154 @@ enum CurrentScene {
     // Menu,
 }
 
-// pub(crate) struct State {
-//     surface: wgpu::Surface,
-//     device: wgpu::Device,
-//     queue: wgpu::Queue,
-//     config: wgpu::SurfaceConfiguration,
-//     // size: egui_wgpu::winit::dpi::PhysicalSize<u32>,
-//     // window: Window,
-//     clear_color: wgpu::Color,
-//     render_pipeline: wgpu::RenderPipeline,
-//     vertex_buffer: wgpu::Buffer, //weg
-//     index_buffer: wgpu::Buffer,  //weg
-//     mouse_pressed: bool,
-//     scene: CurrentScene,
-// }
-
 pub(crate) struct State {
-    angle: f32,
+    // surface: wgpu::Surface,
+    device: Arc<wgpu::Device>,
+    queue: Arc<wgpu::Queue>,
+    // config: wgpu::SurfaceConfiguration,
+    size: (u32, u32),
+    clear_color: wgpu::Color,
+    // render_pipeline: wgpu::RenderPipeline,
+    mouse_pressed: bool,
+    scene: CurrentScene,
 }
 
-
 impl State {
+    // Creating some of the wgpu types requires async code
     pub fn new<'a>(cc: &'a eframe::CreationContext<'a>) -> Option<Self> {
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
         // from `eframe::Frame` when you don't have a `CreationContext` available.
         let wgpu_render_state = cc.wgpu_render_state.as_ref()?;
 
-        let device = &wgpu_render_state.device;
+        let (device, queue) = (
+            wgpu_render_state.device.clone(),
+            wgpu_render_state.queue.clone(),
+        );
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("custom3d"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../custom3d_wgpu_shader.wgsl").into()),
-        });
+        let size_vec2 = // cc.integration_info.window_info.size; //thats the full window size..
+        // cc.egui_ctx.used_size();
+        cc.egui_ctx.screen_rect().size();
+        let size: (u32, u32) = (size_vec2.x as u32, size_vec2.y as u32);
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("custom3d"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: NonZeroU64::new(16),
-                },
-                count: None,
-            }],
-        });
+        let random_seed = fastrand::u64(..); //XXX: set according to level (from level-system)
+        let (mut single_level_manager, shader, render_pipeline_layout) =
+            level::SingleLevelManager::new(0.7, random_seed, &device, size);
+        single_level_manager.start(&queue);
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("custom3d"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
-        });
+        let scene = CurrentScene::Level(single_level_manager);
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("custom3d"),
-            layout: Some(&pipeline_layout),
+        //XXX: put that in the level man or a state match block?
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline"),
+            layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main",
-                buffers: &[],
+                entry_point: "vs_main", // 1.
+                buffers: &[Vertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
+                // 3.
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[Some(wgpu_render_state.target_format.into())],
+                targets: &[Some(wgpu_render_state.target_format.into())], //ah-ha
             }),
-            primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            multiview: None,
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw, // 2.
+                // cull_mode: Some(wgpu::Face::Back),
+                cull_mode: None,
+                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+                polygon_mode: wgpu::PolygonMode::Fill,
+                // Requires Features::DEPTH_CLIP_CONTROL
+                unclipped_depth: false,
+                // Requires Features::CONSERVATIVE_RASTERIZATION
+                conservative: false,
+            },
+            depth_stencil: None, // 1.
+            multisample: wgpu::MultisampleState {
+                count: 1,                         // 2.
+                mask: !0,                         // 3.
+                alpha_to_coverage_enabled: false, // 4.
+            },
+            multiview: None, // 5.
         });
 
-        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("custom3d"),
-            contents: bytemuck::cast_slice(&[0.0_f32; 4]), // 16 bytes aligned!
-            // Mapping at creation (as done by the create_buffer_init utility) doesn't require us to to add the MAP_WRITE usage
-            // (this *happens* to workaround this bug )
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-        });
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("custom3d"),
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
-
-        // Because the graphics pipeline must have the same lifetime as the egui render pass,
-        // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
-        // `paint_callback_resources` type map, which is stored alongside the render pass.
         wgpu_render_state
-            .renderer
-            .write()
-            .paint_callback_resources
-            .insert(TriangleRenderResources {
-                pipeline,
-                bind_group,
-                uniform_buffer,
-            });
+        .renderer
+        .write()
+        .paint_callback_resources
+        .insert(GameRendering {
+            render_pipeline,
+            camera_bind_group: single_level_manager.camera.bind_group,
+            primitives_bind_group: single_level_manager.primitive_manager.bind_group,
+            // diffuse_bind_group,
+            // diffuse_texture,
+        });
 
-        Some(Self { angle: 0.0 })
+        Some(Self {
+            // surface,
+            device,
+            queue,
+            size,
+            clear_color: wgpu::Color::BLUE,
+            // render_pipeline,
+            // num_indices,
+            // diffuse_bind_group,
+            // diffuse_texture,
+            mouse_pressed: false,
+            scene,
+        })
+    }
+
+    // pub fn resize(&mut self, new_size: (u32, u32)) {
+    //     if new_size.0 > 0 && new_size.1 > 0 {
+    //         self.size = new_size;
+    //         self.config.width = new_size.0;
+    //         self.config.height = new_size.1;
+    //         self.surface.configure(&self.device, &self.config);
+    //         match &mut self.scene {
+    //             CurrentScene::Level(ref mut single_level_manager) => {
+    //                 single_level_manager.resize(new_size);
+    //             }
+    //             _ => {}
+    //         }
+    //     }
+    // }
+
+    // fn input(&mut self, input: Input) -> bool {
+    //     if match &mut self.scene {
+    //         CurrentScene::Level(single_level_manager) => single_level_manager.input(&input),
+    //         CurrentScene::GameOver => false,//TODO: handleinputs in game over screen
+    //     } {
+    //         return true;
+    //     }
+    //     match input {
+    //         Input::Window(event) => match event {
+    //             WindowEvent::MouseInput {
+    //                 button: MouseButton::Left,
+    //                 state,
+    //                 ..
+    //             } => {
+    //                 self.mouse_pressed = *state == ElementState::Pressed;
+    //                 true
+    //             }
+    //             _ => false,
+    //         },
+    //         Input::Device(_) => false,
+    //     }
+    // }
+
+    fn update(&mut self, dt: Duration) {
+        match &mut self.scene {
+            CurrentScene::Level(single_level_manager) => {
+                single_level_manager.update(dt, &self.queue);
+                if single_level_manager.game_over {
+                    self.scene = CurrentScene::GameOver;
+                }
+            }
+            CurrentScene::GameOver => {}
+        }
     }
 }
 
@@ -151,10 +196,16 @@ impl State {
         let (rect, response) =
             ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
 
-        self.angle += response.drag_delta().x * 0.01;
+        // let angle += response.drag_delta().x * 0.01;
 
-        // Clone locals so we can move them into the paint callback:
-        let angle = self.angle;
+        // let time_delta = response.ctx
+
+        match &mut self.scene {
+            CurrentScene::Level(single_level_manager) => {}
+            CurrentScene::GameOver => {
+                //TODO: render game over screen
+            }
+        }
 
         // The callback function for WGPU is in two stages: prepare, and paint.
         //
@@ -171,13 +222,13 @@ impl State {
         // can be used to issue draw commands.
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, _encoder, paint_callback_resources| {
-                let resources: &TriangleRenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(device, queue, angle);
+                // let resources = paint_callback_resources.get().unwrap();
+                // resources.prepare(device, queue, angle);
                 Vec::new()
             })
             .paint(move |_info, render_pass, paint_callback_resources| {
-                let resources: &TriangleRenderResources = paint_callback_resources.get().unwrap();
-                resources.paint(render_pass);
+                let resources: &GameRendering = paint_callback_resources.get().unwrap();
+                resources.render(render_pass);
             });
 
         let callback = egui::PaintCallback {
@@ -189,26 +240,144 @@ impl State {
     }
 }
 
-struct TriangleRenderResources {
-    pipeline: wgpu::RenderPipeline,
-    bind_group: wgpu::BindGroup,
-    uniform_buffer: wgpu::Buffer,
+struct GameRendering {
+    render_pipeline: wgpu::RenderPipeline,
+    camera_bind_group: wgpu::BindGroup,
+    primitives_bind_group: wgpu::BindGroup,
 }
 
-impl TriangleRenderResources {
-    fn prepare(&self, _device: &wgpu::Device, queue: &wgpu::Queue, angle: f32) {
-        // Update our uniform buffer with the angle from the UI
-        queue.write_buffer(
-            &self.uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[angle, 0.0, 0.0, 0.0]),
-        );
-    }
+impl GameRendering {
+    fn render<'rp>(&'rp self, render_pass: &mut wgpu::RenderPass<'rp>) {
+        render_pass.set_pipeline(&self.render_pipeline);
+        // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
 
-    fn paint<'rp>(&'rp self, render_pass: &mut wgpu::RenderPass<'rp>) {
-        // Draw our triangle!
-        render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
-        render_pass.draw(0..3, 0..1);
+        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
+        render_pass.set_bind_group(0, &self.primitives_bind_group, &[]);
+
+        // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.
+        render_pass.draw_indexed(0..(INDICES.len() as u32), 0, 0..1);
     }
 }
+
+// enum Input<'a> {
+//     Device(&'a DeviceEvent),
+//     Window(&'a WindowEvent<'a>),
+// }
+
+// pub async fn run() {
+//     env_logger::init();
+//     let event_loop = EventLoop::new();
+//     let window = WindowBuilder::new().build(&event_loop).unwrap();
+
+//     let mut state = State::new(window).await;
+//     let mut last_render_time = std::time::Instant::now();
+
+//     event_loop.run(move |event, _, control_flow| match event {
+//         Event::RedrawRequested(window_id) if window_id == state.window().id() => {
+//             let now = std::time::Instant::now();
+//             let dt = now - last_render_time;
+//             last_render_time = now;
+//             state.update(dt);
+//             match state.render() {
+//                 Ok(_) => {}
+//                 // Reconfigure the surface if lost
+//                 Err(wgpu::SurfaceError::Lost) => state.resize(state.size),
+//                 // The system is out of memory, we should probably quit
+//                 Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+//                 // All other errors (Outdated, Timeout) should be resolved by the next frame
+//                 Err(e) => eprintln!("{:?}", e),
+//             }
+//         }
+//         Event::MainEventsCleared => {
+//             // RedrawRequested will only trigger once, unless we manually
+//             // request it.
+//             state.window().request_redraw();
+//         }
+//         Event::DeviceEvent { event, .. } => {
+//             if !state.input(Input::Device(&event)) {
+//                 match event {
+//                     _ => {}
+//                 }
+//             }
+//         }
+//         Event::WindowEvent {
+//             ref event,
+//             window_id,
+//         } if window_id == state.window().id() => {
+//             if !state.input(Input::Window(event)) {
+//                 match event {
+//                     #[cfg(not(target_arch = "wasm32"))]
+//                     WindowEvent::CloseRequested
+//                     | WindowEvent::KeyboardInput {
+//                         input:
+//                             KeyboardInput {
+//                                 state: ElementState::Pressed,
+//                                 virtual_keycode: Some(VirtualKeyCode::Escape),
+//                                 ..
+//                             },
+//                         ..
+//                     } => *control_flow = ControlFlow::Exit,
+//                     WindowEvent::Resized(physical_size) => {
+//                         state.resize(*physical_size);
+//                     }
+//                     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+//                         state.resize(**new_inner_size);
+//                     }
+//                     _ => {}
+//                 }
+//             }
+//         }
+//         _ => {}
+//     });
+// }
+
+// MARK: useless stuff
+
+// vertices
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Vertex {
+    position: [f32; 3],
+    // tex_coords: [f32; 2], // NEW!
+}
+
+impl Vertex {
+    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+        use std::mem;
+        wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                // wgpu::VertexAttribute {
+                //     offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                //     shader_location: 1,
+                //     format: wgpu::VertexFormat::Float32x2,
+                // },
+            ],
+        }
+    }
+}
+
+const VERTICES: &[Vertex; 4] = &[
+    Vertex {
+        position: [-1.0, -1.0, 0.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [1.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [1.0, -1.0, 0.0],
+    },
+];
+
+const INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];

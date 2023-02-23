@@ -40,7 +40,7 @@ impl WrapApp {
 
             #[cfg(feature = "wgpu")]
             game: crate::apps::game::State::new(_cc),
-
+            
             dropped_files: Default::default(),
         };
 
