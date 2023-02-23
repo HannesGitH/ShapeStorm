@@ -33,7 +33,8 @@ pub fn get_min_dst_to_primitives(
         //     primitive.typus = Typus::Ellipsoid;
         //     continue;
         // }
-        let dst = distance_to_primitive(point, primitive);//put in thread?
+        //FIXME: sometimes this works, sometimes it doesn't, whats the pattern? are only some primitives checked?
+        let dst = distance_to_primitive(point, primitive);//TODO: put in thread?
         // primitive.rgba = [0.0, 0.0, 0.0, 1.0];
         if dst < min_dst {
             min_dst = dst;
