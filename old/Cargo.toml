@@ -1,0 +1,19 @@
+[package]
+name = "wgpu-learn"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.68"
+bytemuck = { version = "1.13", features = [ "derive" ] }
+env_logger = "0.10.0"
+image = "0.24.5"
+log = "0.4.17"
+pollster = "0.2.5"
+wgpu = "0.15.1"
+winit = "0.27.5"
+cgmath = "0.18"
+fastrand = "1.9.0"
+# nalgebra = "0.32.1"
