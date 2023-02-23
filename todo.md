@@ -7,12 +7,20 @@
   - more time
   - more lives
 - [ ] other special effects (warp, smooth, other rendering, etc..) to make the levels more interesting
+  - [x] implement
+  - [ ] activate
 - [ ] collision detection (cpu side)
+  - [x] implement
+  - [ ] DEBUG
   - maybe also normal estimation to make stuff bounce around?
 - [ ] make it run on android ...
 - [ ] vr?
 - [ ] ui
-  - [ ] FRAMEWORK?
+  - [x] egui
+    - [ ] correct resizing
+    - [ ] correct scaling
+    - [ ] handle input
+    - [ ] update with correct dt (not fixed 1/60s)
   - [ ] menu
   - [ ] pause
   - [ ] game over
