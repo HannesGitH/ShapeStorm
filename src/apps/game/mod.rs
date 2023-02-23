@@ -1,4 +1,8 @@
-use std::{num::NonZeroU64, sync::Arc, time::{Duration, Instant}};
+use std::{
+    num::NonZeroU64,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use eframe::{
     egui_wgpu::wgpu::util::DeviceExt,
@@ -158,8 +162,11 @@ impl State {
 
     fn update(&mut self) {
         let now = Instant::now();
-        let dt = if let Some(lt)=self.last_time{
-            now.duration_since(lt)}else{Duration::from_secs(0)};
+        let dt = if let Some(lt) = self.last_time {
+            now.duration_since(lt)
+        } else {
+            Duration::from_secs(0)
+        };
         self.last_time = Some(now);
         match &mut self.scene {
             CurrentScene::Level(single_level_manager) => {
@@ -177,19 +184,31 @@ impl eframe::App for State {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.update();
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::Frame::canvas(ui.style()).show(ui, |ui| {
-                self.custom_painting(ui);
-            });
+            egui::ScrollArea::both()
+                .auto_shrink([false; 2])
+                .show(ui, |ui| {
+                    egui::Frame::canvas(ui.style()).show(ui, |ui| {
+                        self.custom_painting(ui);
+                    });
+                });
         });
     }
 }
 
 impl State {
     fn custom_painting(&mut self, ui: &mut egui::Ui) {
-        let (rect, response) =
-            ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
+        let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
         // let angle += response.drag_delta().x * 0.01;
+        // this shouldnt be the final controls but i think i'll go back to bevy for that
+        let drag = response.drag_delta();
+        match &mut self.scene {
+            CurrentScene::Level(single_level_manager) => {
+                let delta = cgmath::Vector3::new(drag.x, drag.y, 0.0);
+                single_level_manager.move_by(delta);
+            }
+            CurrentScene::GameOver => {}
+        }
 
         self.resize((rect.width() as u32, rect.height() as u32));
         // let time_delta = response.ctx

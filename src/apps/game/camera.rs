@@ -143,6 +143,10 @@ impl CameraController {
         }
     }
 
+    pub fn move_by(&mut self, delta: Vector3<f32>, camera: &mut Camera) {
+        camera.position += delta;
+    }
+
     // pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) -> bool {
     //     let amount = if state == ElementState::Pressed {
     //         1.0

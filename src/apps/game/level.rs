@@ -136,6 +136,10 @@ impl SingleLevelManager {
         );
     }
 
+    pub fn move_by(&mut self, delta: Vector3<f32>) {
+        self.camera.controller.move_by(delta, &mut self.camera.camera); //weird controller but heyy
+    }
+
     pub fn resize(&mut self, size: (u32, u32)) {
         self.camera.resize(size.0, size.1);
     }

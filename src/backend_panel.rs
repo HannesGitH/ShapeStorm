@@ -37,7 +37,7 @@ enum RunMode {
 ///    so there are no events to miss.
 impl Default for RunMode {
     fn default() -> Self {
-        RunMode::Reactive
+        RunMode::Continuous
     }
 }
 
