@@ -55,11 +55,6 @@ impl Default for HttpApp {
 
 impl eframe::App for HttpApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::bottom("http_bottom").show(ctx, |ui| {
-            let layout = egui::Layout::top_down(egui::Align::Center).with_main_justify(true);
-            ui.allocate_ui_with_layout(ui.available_size(), layout, |ui| {
-            })
-        });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let trigger_fetch = ui_url(ui, frame, &mut self.url);

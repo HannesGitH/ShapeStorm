@@ -288,16 +288,3 @@ impl WrapApp {
         }
     }
 }
-
-fn clock_button(ui: &mut egui::Ui, seconds_since_midnight: f64) -> egui::Response {
-    let time = seconds_since_midnight;
-    let time = format!(
-        "{:02}:{:02}:{:02}.{:02}",
-        (time % (24.0 * 60.0 * 60.0) / 3600.0).floor(),
-        (time % (60.0 * 60.0) / 60.0).floor(),
-        (time % 60.0).floor(),
-        (time % 1.0 * 100.0).floor()
-    );
-
-    ui.button(egui::RichText::new(time).monospace())
-}

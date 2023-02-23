@@ -2,7 +2,7 @@
 
 CRATE_NAME="egui_demo_app"
  # NOTE: persistence use up about 400kB (10%) of the WASM!
-FEATURES="wgpu,http,persistence,web_screen_reader"
+FEATURES="glow,http,persistence,web_screen_reader"
 
 OPEN=false
 OPTIMIZE=false
@@ -10,7 +10,7 @@ OPTIMIZE=false
 while test $# -gt 0; do
   case "$1" in
     -h|--help)
-      echo "build_demo_web.sh [--optimize] [--open]"
+      echo "build.sh [--optimize] [--open]"
       echo ""
       echo "  --optimize: Enable optimization step"
       echo "              Runs wasm-opt."
