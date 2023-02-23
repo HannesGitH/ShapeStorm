@@ -24,7 +24,7 @@ pub struct WrapApp {
     custom3d: Option<crate::apps::Custom3d>,
 
     #[cfg(feature = "wgpu")]
-    game: Option<crate::apps::game::singlelevel::Custom3d>,
+    game: Option<crate::apps::game::State>,
 
     dropped_files: Vec<egui::DroppedFile>,
 }
@@ -39,7 +39,7 @@ impl WrapApp {
             custom3d: crate::apps::Custom3d::new(_cc),
 
             #[cfg(feature = "wgpu")]
-            game: crate::apps::game::singlelevel::Custom3d::new(_cc),
+            game: crate::apps::game::State::new(_cc),
 
             dropped_files: Default::default(),
         };
