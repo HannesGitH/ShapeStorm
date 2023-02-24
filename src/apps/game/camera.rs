@@ -18,12 +18,12 @@ const SAFE_FRAC_PI_2: f32 = FRAC_PI_2 - 0.0001;
 
 
 #[repr(u32)]
-#[derive(Debug, Copy, Clone)] //, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Copy, Clone, PartialEq)] //, bytemuck::Pod, bytemuck::Zeroable)]
 pub enum Effect {
     None,
     GlassyOnion,
     GlowOff,
-    CleanFromWater,
+    Neon,
     BlackBody,
     WhiteBody,
     // HalfStep,

@@ -42,12 +42,7 @@ impl SpawnData {
         self.last_spawn += dt;
         let spawn_time = self.max_spawn_time_s
             - (self.max_spawn_time_s - self.min_spawn_time_s) * hardness * self.next_random;
-        if self.last_spawn.as_secs_f32() > spawn_time {
-            self.last_spawn = std::time::Duration::from_secs(0);
-            true
-        } else {
-            false
-        }
+        self.last_spawn.as_secs_f32() > spawn_time
     }
     fn did_spawn(&mut self) {
         self.last_spawn = std::time::Duration::from_secs(0);
@@ -127,7 +122,7 @@ impl SingleLevelManager {
         self.primitive_manager.update_primitives(
             |primitives| {
                 for primitive in primitives.iter_mut() {
-                    if self.rng.f32() < self.hardness {
+                    if self.rng.f32() < self.hardness/0.6 {
                         respawn_primitive(params, primitive);
                     }
                 }
@@ -252,7 +247,7 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
         primitive.rgba = x4!(rng.f32());
         let max_len = primitive.data.iter().fold(f32::MIN, |a, &b| a.max(b));
         const DISTANCE_FACTOR: f32 = 3.5;
-        if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 10.0 { //safety distance to prevent artifacts
+        if max_len*3.0+DISTANCE_FACTOR*2.0 < VIEW_DST / 3.0 { //safety distance to prevent artifacts
             let triple_this_axis = || {
                 (hardness > rng.f32()) as u32
             };

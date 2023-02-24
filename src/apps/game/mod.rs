@@ -8,7 +8,9 @@ use eframe::{
     egui_wgpu::wgpu::util::DeviceExt,
     egui_wgpu::{self, wgpu},
 };
-use egui::Window;
+use egui::{Window, ComboBox};
+
+use self::camera::Effect;
 
 mod camera;
 mod level;
@@ -184,13 +186,39 @@ impl eframe::App for State {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.update();
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::both()
-                .auto_shrink([false; 2])
-                .show(ui, |ui| {
-                    egui::Frame::canvas(ui.style()).show(ui, |ui| {
-                        self.custom_painting(ui);
+            ui.vertical(|ui| {
+                ui.horizontal(
+                    |ui| {
+                        //combobox
+                        match &mut self.scene {
+                            CurrentScene::Level(single_level_manager) => {
+                                let ref mut selected = single_level_manager.camera.uniform.effect;
+                                egui::ComboBox::from_label("Select an Effect")
+                                .selected_text(format!("{:?}", selected))
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(selected, Effect::None, "None");
+                                    ui.selectable_value(selected, Effect::BlackBody, "BlackBody");
+                                    ui.selectable_value(selected, Effect::WhiteBody, "WhiteBody");
+                                    ui.selectable_value(selected, Effect::GlowOff, "GlowOff");
+                                    ui.selectable_value(selected, Effect::GlassyOnion, "GlassyOnion");
+                                    ui.selectable_value(selected, Effect::Neon, "Neon");
+                                }
+                            );
+                            }
+                            CurrentScene::GameOver => {}
+                        }
+                        // ui.add(ComboBox::new(&mut , &Effect::variants()).text_style(TextStyle::Button));
+                    }
+                );
+                
+                egui::ScrollArea::both()
+                    .auto_shrink([false; 2])
+                    .show(ui, |ui| {
+                        egui::Frame::canvas(ui.style()).show(ui, |ui| {
+                            self.custom_painting(ui);
+                        });
                     });
-                });
+            });
         });
     }
 }
@@ -210,7 +238,12 @@ impl State {
             CurrentScene::GameOver => {}
         }
 
-        self.resize((rect.width() as u32, rect.height() as u32));
+        let scale = ui.ctx().pixels_per_point();
+
+        self.resize((
+            (rect.width() * scale) as u32,
+            (rect.height() * scale) as u32,
+        ));
         // let time_delta = response.ctx
 
         match &mut self.scene {
@@ -380,20 +413,3 @@ impl Vertex {
         }
     }
 }
-
-const VERTICES: &[Vertex; 4] = &[
-    Vertex {
-        position: [-1.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [-1.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [1.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [1.0, -1.0, 0.0],
-    },
-];
-
-const INDICES: &[u16] = &[2, 1, 0, 3, 2, 0];

@@ -118,15 +118,17 @@ fn march(ray: Ray) -> MarchOutput {
             // color = out.color;
             if (camera.effect == 4u) { //4u = black-body
                 color = vec4<f32>(0.0);
-            } else if (camera.effect == 5u) { //3u = white-body
+            } else if (camera.effect == 5u || camera.effect == 1u || camera.effect == 3u ) { //5u = white-body
                 color = vec4<f32>(1.0);
+            } else if ( camera.effect == 2u ){
+                color = vec4<f32>(1.0) * (max_distance - dst) / max_distance;
             } else { //shattered glass looking default shader
                 color = color * (max_distance - dst) / max_distance;
             }
             break;
         }
         if (camera.effect != 2u) { //2u = glow-off
-            if (camera.effect == 5u) {
+            if (camera.effect == 5u || camera.effect == 1u || camera.effect == 3u ) { 
                 color = color + out.color / color_damper;
             } else {
                 color = color + out.color * (max_distance - dst) / max_distance / color_damper;
@@ -206,13 +208,26 @@ fn calc_step(from_point: vec3<f32>) -> StepOutput {
         if (camera.effect == 3u) {//clean-from-water
             color = color + prim.rgba / max(dst*dst*dst/max_distance,1.0);
         } else {
-            color = color + prim.rgba / max(dst/3.0,1.0);
+            color = color + prim.rgba / max(dst/6.0,1.0);
         }
-        if (dst < min_dst) {
-            min_dst = dst;
-        }
+
+        min_dst = combine(min_dst, dst);
     }
     return StepOutput(min_dst, color);
+}
+
+const smoothed = false;
+fn combine(d1: f32, d2: f32)->f32{//, c1: vec4<f32>, c2: vec4<f32>)->f32{
+    if smoothed {
+        return smooth_min(d1,d2,100.0);
+    } else {
+        return min(d1,d2);
+    }
+}
+
+fn smooth_min( d1 : f32, d2 : f32  , k  : f32) -> f32 {
+    let h : f32 = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
+    return mix( d2, d1, h ) - k*h*(1.0-h); 
 }
 
 fn get_ith_primitive(i: u32) -> Primitive {
