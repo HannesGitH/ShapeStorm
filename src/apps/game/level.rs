@@ -223,7 +223,7 @@ fn respawn_primitive(params: &RespawnParams, primitive: &mut SDFPrimitive) {
         primitive.speed = 0.0;
         primitive.typus = Typus::Ellipsoid;
         primitive.place_in_spawn_area(rng);
-        primitive.position[2] -= 1000.0;
+        primitive.position[2] -= 1200.0;
     } else {
 
         primitive.data = x4!(hardness_to_scale(hardness, rng.f32()));

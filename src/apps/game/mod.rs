@@ -16,6 +16,7 @@ mod camera;
 mod level;
 mod macros;
 mod primitives;
+mod controller;
 
 enum CurrentScene {
     Level(level::SingleLevelManager),
@@ -192,6 +193,11 @@ impl eframe::App for State {
                         //combobox
                         match &mut self.scene {
                             CurrentScene::Level(single_level_manager) => {
+                                ui.input( |input| {
+                                    for event in &input.events {
+                                        
+                                    }
+                                });
                                 let ref mut selected = single_level_manager.camera.uniform.effect;
                                 egui::ComboBox::from_label("Select an Effect")
                                 .selected_text(format!("{:?}", selected))

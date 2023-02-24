@@ -4,7 +4,8 @@ use cgmath::{
 };
 // use winit::dpi::Pixel;
 
-use super::primitives::{SDFPrimitive, Typus};
+use super::{primitives::{SDFPrimitive, Typus}, PRIMITIVE_COUNT};
+static mut NUMBERS: &'static mut [bool] = &mut [false;PRIMITIVE_COUNT as usize];
 
 //TODO: this is not working! sometimes it does, most times it doesn't
 pub fn get_min_dst_to_primitives(
@@ -43,6 +44,11 @@ pub fn get_min_dst_to_primitives(
         if dst < 100.0 {
             primitive.rgba = [1.0, 0.0, 0.0, 1.0];
             // print!("{}", i);
+            unsafe {if !NUMBERS[i]{
+                    println!("{} ", i);
+                    NUMBERS[i] = true;
+                }
+            }
         }
     }
     // primitives[closest].rgba = [1.0, 0.0, 1.0, 1.0];
